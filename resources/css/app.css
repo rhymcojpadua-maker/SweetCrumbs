@@ -1,0 +1,186 @@
+@import url('https://fonts.bunny.net/css?family=fraunces:400,500,600,700,900|instrument-sans:400,500,600,700');
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Fraunces', ui-serif, Georgia, serif;
+
+    --color-cream: #fbf7f1;
+    --color-parchment: #f3ebe0;
+    --color-ink: #2b211b;
+    --color-cocoa: #6b5748;
+    --color-clay: #a67c63;
+    --color-rose: #b96b7c;
+    --color-blush: #f6e2e5;
+    --color-gold: #c6a15b;
+    --color-sage: #8f9c84;
+}
+
+@layer base {
+    body {
+        @apply bg-cream text-ink antialiased;
+        isolation: isolate;
+        position: relative;
+    }
+
+    body::before {
+        position: fixed;
+        z-index: -1;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(107, 87, 72, 0.065) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(107, 87, 72, 0.065) 1px, transparent 1px);
+        background-size: 44px 44px;
+        content: '';
+        pointer-events: none;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    ::selection {
+        background: var(--color-blush);
+        color: var(--color-ink);
+    }
+}
+
+@layer components {
+    .container-page {
+        @apply mx-auto w-full max-w-7xl px-5 sm:px-6 lg:px-8;
+    }
+
+    .font-display {
+        font-family: var(--font-display);
+        font-variation-settings: 'SOFT' 60, 'WONK' 1;
+    }
+
+    .eyebrow {
+        @apply text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-cocoa;
+    }
+
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-rose focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-cream transition hover:bg-cocoa focus:outline-none focus-visible:ring-2 focus-visible:ring-rose focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-rose {
+        @apply inline-flex items-center justify-center gap-2 rounded-full bg-rose px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#a65c6c] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 bg-white/70 px-5 py-2.5 text-sm font-semibold text-ink transition hover:border-ink/30 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-rose focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-cocoa transition hover:bg-parchment hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-rose;
+    }
+
+    .btn-danger {
+        @apply inline-flex items-center justify-center gap-2 rounded-full bg-rose/10 px-5 py-2.5 text-sm font-semibold text-rose ring-1 ring-rose/25 transition hover:bg-rose/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-sm {
+        @apply px-3.5 py-1.5 text-xs;
+    }
+
+    .card {
+        @apply rounded-3xl border border-ink/8 bg-white/80 shadow-[0_18px_50px_-30px_rgba(43,33,27,0.35)] backdrop-blur;
+    }
+
+    .card-flat {
+        @apply rounded-2xl border border-ink/8 bg-white;
+    }
+
+    .input {
+        @apply block w-full rounded-xl border border-ink/15 bg-white px-3.5 py-2.5 text-sm text-ink shadow-sm outline-none transition placeholder:text-cocoa/45 focus:border-rose focus:ring-2 focus:ring-rose/20;
+    }
+
+    .label {
+        @apply mb-1.5 block text-xs font-semibold uppercase tracking-[0.12em] text-cocoa;
+    }
+
+    .field-error {
+        @apply mt-1.5 text-xs font-medium text-rose;
+    }
+
+    .badge {
+        @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.7rem] font-semibold ring-1 ring-inset;
+    }
+
+    .table-wrap {
+        @apply overflow-x-auto rounded-2xl border border-ink/8 bg-white;
+    }
+
+    .table {
+        @apply w-full text-left text-sm;
+    }
+
+    .table thead {
+        @apply bg-parchment/60 text-[0.68rem] uppercase tracking-[0.12em] text-cocoa;
+    }
+
+    .table th {
+        @apply whitespace-nowrap px-4 py-3 font-semibold;
+    }
+
+    .table td {
+        @apply border-t border-ink/6 px-4 py-3.5 align-middle;
+    }
+
+    .table tbody tr {
+        @apply transition hover:bg-cream/70;
+    }
+
+    .nav-link {
+        @apply text-sm font-medium text-cocoa transition hover:text-ink;
+    }
+
+    .nav-link-active {
+        @apply text-ink;
+    }
+
+    .sidebar-link {
+        @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-cocoa transition hover:bg-parchment/80 hover:text-ink;
+    }
+
+    .sidebar-link-active {
+        @apply bg-ink text-cream hover:bg-ink hover:text-cream;
+    }
+
+    .metric {
+        @apply rounded-3xl border border-ink/8 bg-white/80 p-5 shadow-[0_18px_50px_-30px_rgba(43,33,27,0.35)] backdrop-blur;
+    }
+
+    .metric-label {
+        @apply text-xs font-semibold uppercase tracking-[0.14em] text-cocoa/80;
+    }
+
+    .metric-value {
+        @apply mt-2 font-display text-3xl font-semibold tracking-tight text-ink;
+    }
+
+    .divider {
+        @apply border-t border-ink/8;
+    }
+
+    .prose-cakelle {
+        @apply text-[0.98rem] leading-8 text-cocoa;
+    }
+
+    .prose-cakelle p {
+        @apply mb-5;
+    }
+
+    .prose-cakelle a {
+        @apply font-medium text-rose underline decoration-rose/30 underline-offset-4 hover:decoration-rose;
+    }
+}

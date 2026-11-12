@@ -1,0 +1,67 @@
+title: Homepage
+tabs:
+  main:
+    display: Hero
+    sections:
+      -
+        fields:
+          -
+            handle: hero_eyebrow
+            field:
+              type: text
+              display: Eyebrow
+          -
+            handle: hero_heading
+            field:
+              type: textarea
+              display: Heading
+          -
+            handle: hero_subheading
+            field:
+              type: textarea
+              display: Subheading
+          -
+            handle: hero_primary_label
+            field:
+              type: text
+              display: Primary button label
+          -
+            handle: hero_primary_url
+            field:
+              type: text
+              display: Primary button URL
+          -
+            handle: hero_secondary_label
+            field:
+              type: text
+              display: Secondary button label
+          -
+            handle: hero_secondary_url
+            field:
+              type: text
+              display: Secondary button URL
+          -
+            handle: hero_image
+            field:
+              type: text
+              display: Hero image URL
+          -
+            handle: promo_heading
+            field:
+              type: text
+              display: Promo heading
+          -
+            handle: promo_body
+            field:
+              type: textarea
+              display: Promo body
+          -
+            handle: promo_cta_label
+            field:
+              type: text
+              display: Promo button label
+          -
+            handle: promo_cta_url
+            field:
+              type: text
+              display: Promo button URL

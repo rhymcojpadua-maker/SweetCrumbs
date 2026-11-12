@@ -1,0 +1,44 @@
+title: Testimonial
+tabs:
+  main:
+    display: Content
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              display: Internal title
+              required: true
+          -
+            handle: quote
+            field:
+              type: textarea
+              display: Quote
+              required: true
+          -
+            handle: name
+            field:
+              type: text
+              display: Customer name
+              required: true
+          -
+            handle: detail
+            field:
+              type: text
+              display: Context
+              instructions: For example, "Birthday cake · Quezon City".
+          -
+            handle: rating
+            field:
+              type: integer
+              display: Rating
+              default: 5
+              validate: required|integer|between:1,5
+          -
+            handle: order
+            field:
+              type: integer
+              display: Sort order
+              default: 0

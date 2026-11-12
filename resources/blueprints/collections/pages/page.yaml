@@ -1,0 +1,31 @@
+title: Page
+tabs:
+  main:
+    display: Content
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              display: Page title
+              required: true
+          -
+            handle: intro
+            field:
+              type: textarea
+              display: Intro
+              instructions: A short lead paragraph shown beneath the page title.
+          -
+            handle: content
+            field:
+              type: textarea
+              display: Body
+              instructions: Markdown is supported.
+          -
+            handle: updated_label
+            field:
+              type: text
+              display: Last updated label
+              instructions: For example, "Last updated November 2026".
