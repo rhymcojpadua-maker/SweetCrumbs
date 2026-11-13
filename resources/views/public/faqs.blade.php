@@ -1,13 +1,13 @@
 @extends('layouts.public')
 
-@section('title', ($page?->get('title') ?? 'Frequently asked questions').' — Cakelle')
+@section('title', ($page?->get('title') ?? 'Frequently asked questions').' — SweetCrumbs')
 
 @section('content')
     <section class="border-b border-ink/8 bg-parchment/35">
         <div class="container-page py-14 lg:py-20">
             <p class="eyebrow">Good to know</p>
             <h1 class="mt-4 max-w-3xl font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">{{ $page?->get('title') ?? 'Frequently asked questions' }}</h1>
-            <p class="mt-5 max-w-2xl text-lg leading-8 text-cocoa">{{ $page?->get('intro') ?? 'Everything you need to know about ordering, delivery, and baking with Cakelle.' }}</p>
+            <p class="mt-5 max-w-2xl text-lg leading-8 text-cocoa">{{ $page?->get('intro') ?? 'Everything you need to know about ordering, delivery, and baking with SweetCrumbs.' }}</p>
         </div>
     </section>
 

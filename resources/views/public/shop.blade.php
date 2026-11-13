@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $shop->name.' — Cakelle')
+@section('title', $shop->name.' — SweetCrumbs')
 @section('description', \Illuminate\Support\Str::limit(strip_tags($shop->description), 155))
 
 @section('content')
@@ -149,7 +149,7 @@
                                     <div class="flex items-center gap-3">
                                         <img src="{{ $review->customer?->avatarUrl() }}" alt="" class="h-9 w-9 rounded-full object-cover">
                                         <div>
-                                            <p class="text-sm font-semibold">{{ $review->customer?->name ?? 'Cakelle customer' }}</p>
+                                            <p class="text-sm font-semibold">{{ $review->customer?->name ?? 'SweetCrumbs customer' }}</p>
                                             <p class="text-xs text-cocoa">{{ $review->created_at->format('M j, Y') }}</p>
                                         </div>
                                     </div>

@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $page->get('title').' — Cakelle')
+@section('title', $page->get('title').' — SweetCrumbs')
 @section('description', \Illuminate\Support\Str::limit(strip_tags($page->get('intro') ?? ''), 155))
 
 @section('content')
@@ -8,7 +8,7 @@
 
     <section class="border-b border-ink/8 bg-parchment/35">
         <div class="container-page py-14 lg:py-20">
-            <p class="eyebrow">Cakelle</p>
+            <p class="eyebrow">SweetCrumbs</p>
             <h1 class="mt-4 max-w-4xl font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">{{ $page->get('title') }}</h1>
             @if ($page->get('intro'))
                 <p class="mt-5 max-w-2xl text-lg leading-8 text-cocoa">{{ $page->get('intro') }}</p>

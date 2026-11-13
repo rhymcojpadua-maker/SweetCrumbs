@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Order '.$order->order_number.' — Cakelle')
+@section('title', 'Order '.$order->order_number.' — SweetCrumbs')
 
 @section('content')
     <div class="container-page py-12">

@@ -9,7 +9,7 @@
         <div class="card overflow-hidden">
             <div class="relative overflow-hidden bg-ink px-6 py-10 text-cream sm:px-10">
                 <div class="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-rose/20 blur-3xl"></div>
-                <p class="eyebrow text-cream/60">Cakelle bakeries</p>
+                <p class="eyebrow text-cream/60">SweetCrumbs bakeries</p>
                 <h2 class="mt-3 font-display text-4xl font-semibold">
                     @if ($shop?->status === \App\Enums\ShopStatus::Suspended)
                         Your bakery is paused.
@@ -27,7 +27,7 @@
                     @elseif ($shop->status === \App\Enums\ShopStatus::Rejected)
                         We could not approve {{ $shop->name }} at this time. See the note below for context from our team.
                     @else
-                        Thank you for applying to sell on Cakelle. A member of our marketplace team reviews every new bakery before it opens. We usually respond within two business days.
+                        Thank you for applying to sell on SweetCrumbs. A member of our marketplace team reviews every new bakery before it opens. We usually respond within two business days.
                     @endif
                 </p>
             </div>

@@ -21,11 +21,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Administration') — Cakelle</title>
+    <title>@yield('title', 'Administration') — SweetCrumbs</title>
 
-    <link rel="icon" href="{{ asset('favicon.svg') }}?v={{ filemtime(public_path('favicon.svg')) }}" type="image/svg+xml">
-    <link rel="alternate icon" href="{{ asset('favicon.ico') }}?v={{ filemtime(public_path('favicon.ico')) }}">
-
+    <link rel="icon" href="{{ asset('favicon.png') }}?v={{ filemtime(public_path('favicon.png')) }}" type="image/png">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
@@ -35,8 +33,7 @@
     <aside class="fixed inset-y-0 left-0 z-50 flex w-[17rem] -translate-x-full flex-col bg-ink text-cream transition-transform duration-200 lg:translate-x-0" :class="sidebar ? 'translate-x-0' : '-translate-x-full'">
         <div class="flex h-16 items-center justify-between border-b border-white/10 px-5">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5">
-                <span class="grid h-8 w-8 place-items-center rounded-full bg-cream font-display text-base font-semibold text-ink">C</span>
-                <span class="font-display text-xl font-semibold tracking-tight">Cakelle</span>
+                @include('partials.brand-logo', ['class' => 'h-12 w-auto'])
                 <span class="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cream/70">Admin</span>
             </a>
             <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-cream/70 hover:bg-white/10 lg:hidden" @click="sidebar = false" aria-label="Close menu">

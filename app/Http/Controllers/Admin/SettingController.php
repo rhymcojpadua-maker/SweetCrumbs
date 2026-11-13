@@ -14,7 +14,7 @@ class SettingController extends Controller
     public function edit(): View
     {
         $settings = [
-            'platform_name' => PlatformSetting::get('platform_name', 'Cakelle'),
+            'platform_name' => PlatformSetting::get('platform_name', 'SweetCrumbs'),
             'support_email' => PlatformSetting::get('support_email', config('cakelle.support_email')),
             'support_phone' => PlatformSetting::get('support_phone', config('cakelle.support_phone')),
             'announcement' => PlatformSetting::get('announcement', ''),

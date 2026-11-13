@@ -71,7 +71,7 @@ class ShopRegistrationController extends Controller
                     'shop_id' => $shop->id,
                     'type' => 'shop_application',
                     'title' => 'New bakery application',
-                    'body' => $shop->name.' applied to join Cakelle.',
+                    'body' => $shop->name.' applied to join SweetCrumbs.',
                     'data' => ['shop_id' => $shop->id],
                 ]);
             });

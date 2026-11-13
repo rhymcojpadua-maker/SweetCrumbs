@@ -1,6 +1,6 @@
-# Cakelle
+# SweetCrumbs
 
-Cakelle is a multi-tenant cake marketplace for the Philippines. Customers discover bakeries and order celebration cakes; shop owners manage their storefront, orders, products, inventory, customers, and payments; platform admins review applications and oversee the marketplace. Payments run through PayMongo. Editorial content is managed in Statamic.
+SweetCrumbs is a multi-tenant cake marketplace for the Philippines. Customers discover bakeries and order celebration cakes; shop owners manage their storefront, orders, products, inventory, customers, and payments; platform admins review applications and oversee the marketplace. Payments run through PayMongo. Editorial content is managed in Statamic.
 
 ## Stack
 
@@ -40,7 +40,7 @@ CREATE DATABASE cakelle_test;
 Set at minimum:
 
 ```dotenv
-APP_NAME=Cakelle
+APP_NAME=SweetCrumbs
 APP_URL=http://localhost:8000
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1

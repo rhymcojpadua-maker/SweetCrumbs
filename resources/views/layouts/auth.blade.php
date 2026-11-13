@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Cakelle')</title>
+    <title>@yield('title', 'SweetCrumbs')</title>
 
-    <link rel="icon" href="{{ asset('favicon.svg') }}?v={{ filemtime(public_path('favicon.svg')) }}" type="image/svg+xml">
-    <link rel="alternate icon" href="{{ asset('favicon.ico') }}?v={{ filemtime(public_path('favicon.ico')) }}">
-
+    <link rel="icon" href="{{ asset('favicon.png') }}?v={{ filemtime(public_path('favicon.png')) }}" type="image/png">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-cream font-sans text-ink">
@@ -19,8 +17,7 @@
             <div class="absolute -bottom-24 right-0 h-96 w-96 rounded-full bg-gold/15 blur-3xl"></div>
 
             <a href="{{ route('home') }}" class="relative flex items-center gap-2.5">
-                <span class="grid h-9 w-9 place-items-center rounded-full bg-cream font-display text-lg font-semibold text-ink">C</span>
-                <span class="font-display text-2xl font-semibold tracking-tight">Cakelle</span>
+                @include('partials.brand-logo', ['class' => 'h-24 w-auto'])
             </a>
 
             <div class="relative max-w-md">
@@ -39,10 +36,9 @@
         <main class="flex flex-col">
             <div class="flex items-center justify-between border-b border-ink/8 px-5 py-5 sm:px-8 lg:justify-end">
                 <a href="{{ route('home') }}" class="flex items-center gap-2 lg:hidden">
-                    <span class="grid h-8 w-8 place-items-center rounded-full bg-ink font-display text-base font-semibold text-cream">C</span>
-                    <span class="font-display text-xl font-semibold">Cakelle</span>
+                    @include('partials.brand-logo', ['class' => 'h-12 w-auto'])
                 </a>
-                <a href="{{ route('home') }}" class="text-sm font-semibold text-cocoa hover:text-ink">Back to Cakelle</a>
+                <a href="{{ route('home') }}" class="text-sm font-semibold text-cocoa hover:text-ink">Back to SweetCrumbs</a>
             </div>
 
             <div class="flex flex-1 justify-center px-5 py-10 sm:px-8">

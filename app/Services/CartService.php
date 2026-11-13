@@ -52,7 +52,7 @@ class CartService
 
         if ($cart->shop_id && (int) $cart->shop_id !== (int) $product->shop_id && $cart->items()->exists()) {
             throw ValidationException::withMessages([
-                'cart' => 'Your basket contains cakes from another bakery. Cakelle completes one bakery per order.',
+                'cart' => 'Your basket contains cakes from another bakery. SweetCrumbs completes one bakery per order.',
             ]);
         }
 

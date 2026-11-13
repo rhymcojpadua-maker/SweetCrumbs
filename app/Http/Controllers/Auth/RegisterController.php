@@ -38,6 +38,6 @@ class RegisterController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('marketplace')->with('success', 'Welcome to Cakelle. Find a cake for your next story.');
+        return redirect()->route('marketplace')->with('success', 'Welcome to SweetCrumbs. Find a cake for your next story.');
     }
 }

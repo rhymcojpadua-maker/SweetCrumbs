@@ -1,11 +1,11 @@
 @extends('layouts.auth')
 
-@section('title', 'Sign in — Cakelle')
+@section('title', 'Sign in — SweetCrumbs')
 
 @section('content')
     <div>
         <p class="eyebrow">Welcome back</p>
-        <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight">Sign in to Cakelle.</h1>
+        <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight">Sign in to SweetCrumbs.</h1>
         <p class="mt-3 text-sm text-cocoa">Pick up a basket, check an order, or open your bakery dashboard.</p>
     </div>
 
@@ -28,7 +28,7 @@
     </form>
 
     <p class="mt-6 text-center text-sm text-cocoa">
-        New to Cakelle?
+        New to SweetCrumbs?
         <a href="{{ route('register') }}" class="font-semibold text-rose hover:underline">Create an account</a>
     </p>
     <p class="mt-2 text-center text-sm text-cocoa">

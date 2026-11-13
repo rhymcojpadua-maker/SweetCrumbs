@@ -24,11 +24,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Dashboard') — {{ $dashboardShop?->name ?? 'Cakelle' }}</title>
+    <title>@yield('title', 'Dashboard') — {{ $dashboardShop?->name ?? 'SweetCrumbs' }}</title>
 
-    <link rel="icon" href="{{ asset('favicon.svg') }}?v={{ filemtime(public_path('favicon.svg')) }}" type="image/svg+xml">
-    <link rel="alternate icon" href="{{ asset('favicon.ico') }}?v={{ filemtime(public_path('favicon.ico')) }}">
-
+    <link rel="icon" href="{{ asset('favicon.png') }}?v={{ filemtime(public_path('favicon.png')) }}" type="image/png">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
@@ -38,8 +36,7 @@
     <aside class="fixed inset-y-0 left-0 z-50 flex w-[17.5rem] -translate-x-full flex-col border-r border-ink/8 bg-parchment transition-transform duration-200 lg:translate-x-0" :class="sidebar ? 'translate-x-0' : '-translate-x-full'">
         <div class="flex h-16 items-center justify-between border-b border-ink/8 px-5">
             <a href="{{ route('dashboard.index') }}" class="flex items-center gap-2.5">
-                <span class="grid h-8 w-8 place-items-center rounded-full bg-ink font-display text-base font-semibold text-cream">C</span>
-                <span class="font-display text-xl font-semibold tracking-tight">Cakelle</span>
+                @include('partials.brand-logo', ['class' => 'h-12 w-auto'])
             </a>
             <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-cocoa hover:bg-ink/5 lg:hidden" @click="sidebar = false" aria-label="Close menu">
                 @include('partials.icon', ['name' => 'close', 'class' => 'h-4 w-4'])
@@ -48,7 +45,7 @@
 
         <div class="border-b border-ink/8 px-4 py-4">
             <div class="flex items-center gap-3 rounded-xl bg-white/60 p-2.5">
-                <img src="{{ $dashboardShop?->logoUrl() ?? 'https://ui-avatars.com/api/?name=Cakelle&background=2b211b&color=fbf7f1' }}" alt="" class="h-9 w-9 rounded-full object-cover">
+                <img src="{{ $dashboardShop?->logoUrl() ?? 'https://ui-avatars.com/api/?name=SweetCrumbs&background=2b211b&color=fbf7f1' }}" alt="" class="h-9 w-9 rounded-full object-cover">
                 <div class="min-w-0">
                     <p class="truncate text-sm font-semibold">{{ $dashboardShop?->name ?? 'Your bakery' }}</p>
                     <p class="truncate text-xs text-cocoa">{{ $dashboardShop?->city ?? 'Setup needed' }}</p>

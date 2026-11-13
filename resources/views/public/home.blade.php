@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
-@section('title', 'Cakelle — Every celebration deserves a cake with a story')
-@section('description', 'Discover independent Filipino bakeries, design your perfect cake, and reserve a pickup or delivery with Cakelle.')
+@section('title', 'SweetCrumbs — Every celebration deserves a cake with a story')
+@section('description', 'Discover independent Filipino bakeries, design your perfect cake, and reserve a pickup or delivery with SweetCrumbs.')
 
 @section('content')
     <section class="relative isolate overflow-hidden">
@@ -161,9 +161,9 @@
         </div>
 
         <div class="order-1 lg:order-2">
-            <p class="eyebrow">How Cakelle works</p>
+            <p class="eyebrow">How SweetCrumbs works</p>
             <h2 class="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">A slower, more thoughtful way to order a cake.</h2>
-            <p class="mt-5 text-cocoa">We built Cakelle around the details that make a cake feel personal: the baker, the finish, the date it needs to be ready, and the person it is for.</p>
+            <p class="mt-5 text-cocoa">We built SweetCrumbs around the details that make a cake feel personal: the baker, the finish, the date it needs to be ready, and the person it is for.</p>
 
             <ol class="mt-8 space-y-5">
                 @foreach ([

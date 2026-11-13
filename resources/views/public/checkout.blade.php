@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Checkout — Cakelle')
+@section('title', 'Checkout — SweetCrumbs')
 
 @section('content')
     <div class="container-page py-12" x-data="{

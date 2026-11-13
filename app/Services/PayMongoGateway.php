@@ -57,7 +57,7 @@ class PayMongoGateway
                         'success_url' => route('payment.return', ['order' => $order->order_number, 'token' => $order->public_token]),
                         'cancel_url' => route('orders.show', ['order' => $order->order_number, 'token' => $order->public_token]),
                         'reference_number' => $order->order_number,
-                        'description' => 'Cakelle order '.$order->order_number.' from '.$order->shop->name,
+                        'description' => 'SweetCrumbs order '.$order->order_number.' from '.$order->shop->name,
                         'send_email_receipt' => true,
                         'show_description' => true,
                         'show_line_items' => true,

@@ -78,7 +78,7 @@ class ShopController extends Controller
         $shop->owner->appNotifications()->create([
             'shop_id' => $shop->id,
             'type' => 'shop_approved',
-            'title' => 'Your bakery is live on Cakelle',
+            'title' => 'Your bakery is live on SweetCrumbs',
             'body' => $shop->name.' has been approved. Add your cakes and start accepting orders.',
             'data' => ['shop_id' => $shop->id],
         ]);
@@ -127,7 +127,7 @@ class ShopController extends Controller
             'shop_id' => $shop->id,
             'type' => 'shop_suspended',
             'title' => 'Your bakery has been suspended',
-            'body' => $data['reason'] ?? 'Please contact Cakelle support for more information.',
+            'body' => $data['reason'] ?? 'Please contact SweetCrumbs support for more information.',
             'data' => ['shop_id' => $shop->id],
         ]);
 
@@ -148,7 +148,7 @@ class ShopController extends Controller
             'shop_id' => $shop->id,
             'type' => 'shop_activated',
             'title' => 'Your bakery is active again',
-            'body' => $shop->name.' is live on Cakelle.',
+            'body' => $shop->name.' is live on SweetCrumbs.',
             'data' => ['shop_id' => $shop->id],
         ]);
 

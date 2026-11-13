@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Explore cakes — Cakelle')
+@section('title', 'Explore cakes — SweetCrumbs')
 
 @section('content')
     <section class="border-b border-ink/8 bg-parchment/40">

@@ -1,10 +1,10 @@
 @extends('layouts.auth')
 
-@section('title', 'Sell with Cakelle')
+@section('title', 'Sell with SweetCrumbs')
 
 @section('content')
     <div>
-        <p class="eyebrow">Sell with Cakelle</p>
+        <p class="eyebrow">Sell with SweetCrumbs</p>
         <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight">Bring your bakery to the marketplace.</h1>
         <p class="mt-3 text-sm leading-6 text-cocoa">Tell us about your studio. Every application is reviewed by our team before your storefront opens. You can set up cakes and schedules once approved.</p>
     </div>

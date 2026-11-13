@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Cakelle — Cakes with a story')</title>
-    <meta name="description" content="@yield('description', 'Discover independent Filipino bakeries, design your perfect cake, and reserve a pickup or delivery with Cakelle.')">
+    <title>@yield('title', 'SweetCrumbs — Cakes with a story')</title>
+    <meta name="description" content="@yield('description', 'Discover independent Filipino bakeries, design your perfect cake, and reserve a pickup or delivery with SweetCrumbs.')">
 
-    <link rel="icon" href="{{ asset('favicon.svg') }}?v={{ filemtime(public_path('favicon.svg')) }}" type="image/svg+xml">
-    <link rel="alternate icon" href="{{ asset('favicon.ico') }}?v={{ filemtime(public_path('favicon.ico')) }}">
-
+    <link rel="icon" href="{{ asset('favicon.png') }}?v={{ filemtime(public_path('favicon.png')) }}" type="image/png">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-cream font-sans text-ink">
@@ -18,8 +16,7 @@
         <div class="container-page">
             <div class="flex h-[4.5rem] items-center justify-between gap-4">
                 <a href="{{ route('home') }}" class="flex items-center gap-2.5">
-                    <span class="grid h-9 w-9 place-items-center rounded-full bg-ink font-display text-lg font-semibold text-cream">C</span>
-                    <span class="font-display text-2xl font-semibold tracking-tight">Cakelle</span>
+                    @include('partials.brand-logo', ['class' => 'h-16 w-auto'])
                 </a>
 
                 <nav class="hidden items-center gap-7 lg:flex">
@@ -72,7 +69,7 @@
                         </div>
                     @else
                         <a href="{{ route('login') }}" class="hidden sm:inline-flex btn-secondary btn-sm">Sign in</a>
-                        <a href="{{ route('register') }}" class="hidden md:inline-flex btn-primary btn-sm">Join Cakelle</a>
+                        <a href="{{ route('register') }}" class="hidden md:inline-flex btn-primary btn-sm">Join SweetCrumbs</a>
                     @endauth
 
                     <button type="button" @click="mobileOpen = !mobileOpen" class="inline-flex h-10 w-10 items-center justify-center rounded-full text-cocoa hover:bg-parchment lg:hidden" aria-label="Menu">
@@ -93,7 +90,7 @@
                     @guest
                         <div class="mt-3 flex gap-2 px-1">
                             <a href="{{ route('login') }}" class="btn-secondary btn-sm flex-1">Sign in</a>
-                            <a href="{{ route('register') }}" class="btn-primary btn-sm flex-1">Join Cakelle</a>
+                            <a href="{{ route('register') }}" class="btn-primary btn-sm flex-1">Join SweetCrumbs</a>
                         </div>
                     @endguest
                 </nav>
@@ -112,8 +109,7 @@
             <div class="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
                 <div>
                     <a href="{{ route('home') }}" class="flex items-center gap-2.5">
-                        <span class="grid h-9 w-9 place-items-center rounded-full bg-ink font-display text-lg font-semibold text-cream">C</span>
-                        <span class="font-display text-2xl font-semibold tracking-tight">Cakelle</span>
+                        @include('partials.brand-logo', ['class' => 'h-16 w-auto'])
                     </a>
                     <p class="mt-4 max-w-sm text-sm leading-6 text-cocoa">A considered marketplace for the Philippines' independent bakers — and the celebrations that bring us together.</p>
                     <p class="mt-5 text-xs text-cocoa/70">Made with care in the Philippines.</p>
@@ -132,7 +128,7 @@
                 <div>
                     <p class="eyebrow">For bakers</p>
                     <ul class="mt-4 space-y-2.5 text-sm text-cocoa">
-                        <li><a href="{{ route('shop.register') }}" class="hover:text-ink">Sell with Cakelle</a></li>
+                        <li><a href="{{ route('shop.register') }}" class="hover:text-ink">Sell with SweetCrumbs</a></li>
                         @auth
                             @if (auth()->user()->isShopOwner())
                                 <li><a href="{{ route('dashboard.index') }}" class="hover:text-ink">Bakery dashboard</a></li>
@@ -153,7 +149,7 @@
             </div>
 
             <div class="mt-12 flex flex-col gap-3 border-t border-ink/8 pt-6 text-xs text-cocoa/70 sm:flex-row sm:items-center sm:justify-between">
-                <p>&copy; {{ now()->year }} Cakelle. All rights reserved.</p>
+                <p>&copy; {{ now()->year }} SweetCrumbs. All rights reserved.</p>
                 <p>Payments verified securely through PayMongo.</p>
             </div>
         </div>

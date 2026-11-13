@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Bakeries — Cakelle')
+@section('title', 'Bakeries — SweetCrumbs')
 
 @section('content')
     <section class="border-b border-ink/8 bg-parchment/40">
@@ -9,7 +9,7 @@
             <div class="mt-3 flex flex-wrap items-end justify-between gap-6">
                 <div>
                     <h1 class="font-display text-4xl font-semibold tracking-tight sm:text-5xl">Independent studios, one standard.</h1>
-                    <p class="mt-3 max-w-2xl text-cocoa">Every bakery on Cakelle is reviewed before it opens. Browse their storefronts, then order directly from the people who bake.</p>
+                    <p class="mt-3 max-w-2xl text-cocoa">Every bakery on SweetCrumbs is reviewed before it opens. Browse their storefronts, then order directly from the people who bake.</p>
                 </div>
 
                 <form method="GET" action="{{ route('shops.index') }}" class="flex w-full gap-2 sm:w-auto">
@@ -22,7 +22,7 @@
 
     <section class="container-page py-12">
         <div class="flex items-center justify-between gap-4">
-            <p class="text-sm text-cocoa">{{ $shops->total() }} {{ \Illuminate\Support\Str::plural('bakery', $shops->total()) }} on Cakelle</p>
+            <p class="text-sm text-cocoa">{{ $shops->total() }} {{ \Illuminate\Support\Str::plural('bakery', $shops->total()) }} on SweetCrumbs</p>
             @if ($search !== '')
                 <a href="{{ route('shops.index') }}" class="text-sm font-semibold text-rose hover:underline">Clear search</a>
             @endif

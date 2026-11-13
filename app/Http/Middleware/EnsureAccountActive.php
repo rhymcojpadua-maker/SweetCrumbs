@@ -17,7 +17,7 @@ class EnsureAccountActive
             $request->session()->regenerateToken();
 
             return redirect()->route('login')->withErrors([
-                'email' => 'This account has been deactivated. Please contact Cakelle support.',
+                'email' => 'This account has been deactivated. Please contact SweetCrumbs support.',
             ]);
         }
 

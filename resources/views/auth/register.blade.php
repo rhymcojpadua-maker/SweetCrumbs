@@ -1,10 +1,10 @@
 @extends('layouts.auth')
 
-@section('title', 'Create an account — Cakelle')
+@section('title', 'Create an account — SweetCrumbs')
 
 @section('content')
     <div>
-        <p class="eyebrow">Join Cakelle</p>
+        <p class="eyebrow">Join SweetCrumbs</p>
         <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight">Create your customer account.</h1>
         <p class="mt-3 text-sm text-cocoa">Save your details, keep track of orders, and get back to the cakes.</p>
     </div>

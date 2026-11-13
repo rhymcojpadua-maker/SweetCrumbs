@@ -57,7 +57,7 @@ class CakelleDemoSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'admin@cakelle.ph'],
             [
-                'name' => 'Cakelle Administrator',
+                'name' => 'SweetCrumbs Administrator',
                 'phone' => '09170000001',
                 'role' => UserRole::SuperAdmin,
                 'password' => $password,
@@ -198,7 +198,7 @@ class CakelleDemoSeeder extends Seeder
                 'advance_notice_hours' => 24,
                 'delivery_fee' => 150,
                 'free_delivery_threshold' => 5000,
-                'pickup_instructions' => 'Ring the studio bell and ask for your Cakelle order number.',
+                'pickup_instructions' => 'Ring the studio bell and ask for your SweetCrumbs order number.',
                 'delivery_notes' => 'We deliver within Metro Manila. The rider will call before arrival.',
             ]);
 
@@ -281,7 +281,7 @@ class CakelleDemoSeeder extends Seeder
                 'owner_id' => $pendingOwner->id,
                 'name' => 'Sugar Atelier',
                 'tagline' => 'Sculpted sugar, quiet luxury.',
-                'description' => 'Sugar Atelier is a new Davao-based studio focused on sculpted sugar flowers and minimalist wedding cakes. We are excited to join the Cakelle community and share our work with couples across Mindanao.',
+                'description' => 'Sugar Atelier is a new Davao-based studio focused on sculpted sugar flowers and minimalist wedding cakes. We are excited to join the SweetCrumbs community and share our work with couples across Mindanao.',
                 'email' => 'hello@sugaratelier.ph',
                 'phone' => '09172000004',
                 'address' => '5 Juna Avenue, Matina',
@@ -295,7 +295,7 @@ class CakelleDemoSeeder extends Seeder
             ]
         );
 
-        PlatformSetting::set('platform_name', 'Cakelle');
+        PlatformSetting::set('platform_name', 'SweetCrumbs');
         PlatformSetting::set('support_email', 'hello@cakelle.ph');
         PlatformSetting::set('support_phone', '+63 917 000 0000');
         PlatformSetting::set('announcement', '');

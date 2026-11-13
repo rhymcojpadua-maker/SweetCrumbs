@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Track an order — Cakelle')
+@section('title', 'Track an order — SweetCrumbs')
 
 @section('content')
     <div class="container-page py-16">
