@@ -4,64 +4,86 @@
 @section('description', 'Discover independent Filipino bakeries, design your perfect cake, and reserve a pickup or delivery with SweetCrumbs.')
 
 @section('content')
-    <section class="relative isolate overflow-hidden">
-        <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(246,226,229,0.9),_transparent_55%),radial-gradient(circle_at_bottom_right,_rgba(243,235,224,0.9),_transparent_50%)]"></div>
+    @php
+        $heroProduct = $featuredProducts->first();
+        $heroReview = $testimonials->first();
+    @endphp
 
-        <div class="container-page relative z-10 grid items-center gap-14 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
-            <div>
+    <section class="hero-scene relative isolate">
+        <div class="container-page grid items-center gap-10 py-12 sm:gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:py-14">
+            <div class="relative z-10">
                 <p class="eyebrow">{{ $cms['hero_eyebrow'] }}</p>
-                <h1 class="mt-5 max-w-2xl font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-                    {{ $cms['hero_heading'] }}
-                </h1>
-                <p class="mt-6 max-w-xl text-base leading-7 text-cocoa sm:text-lg">
+                @if (trim($cms['hero_heading']) === 'Every celebration deserves a cake with a story.')
+                    <h1 class="mt-5 max-w-[34rem] font-display text-4xl font-semibold leading-[1.04] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+                        Every <span class="hero-heading-accent">celebration</span><br class="hidden sm:block">
+                        deserves a <span class="hero-heading-accent">cake</span><br class="hidden sm:block">
+                        with a <span class="hero-heading-accent">story.</span>
+                    </h1>
+                @else
+                    <h1 class="mt-5 max-w-[34rem] font-display text-4xl font-semibold leading-[1.04] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+                        {{ $cms['hero_heading'] }}
+                    </h1>
+                @endif
+                <p class="mt-5 max-w-xl text-sm leading-6 text-cocoa sm:text-base">
                     {{ $cms['hero_subheading'] }}
                 </p>
 
-                <div class="mt-8 flex flex-wrap items-center gap-3">
+                <div class="mt-6 flex flex-wrap items-center gap-3">
                     <a href="{{ $cms['hero_primary_url'] }}" class="btn-primary">{{ $cms['hero_primary_label'] }}
                         <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.64l-3.2-3.2a.75.75 0 1 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 1 1-1.06-1.06l3.2-3.2H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" /></svg>
                     </a>
                     <a href="{{ $cms['hero_secondary_url'] }}" class="btn-secondary">{{ $cms['hero_secondary_label'] }}</a>
                 </div>
 
-                <div class="mt-10 grid max-w-lg grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
-                    <div>
-                        <p class="font-display text-3xl font-semibold">{{ number_format($stats['bakeries']) }}</p>
-                        <p class="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-cocoa/70">Bakeries</p>
-                    </div>
-                    <div>
-                        <p class="font-display text-3xl font-semibold">{{ number_format($stats['cakes']) }}</p>
-                        <p class="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-cocoa/70">Cakes</p>
-                    </div>
-                    <div>
-                        <p class="font-display text-3xl font-semibold">{{ number_format($stats['orders']) }}</p>
-                        <p class="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-cocoa/70">Celebrations</p>
-                    </div>
-                    <div>
-                        <p class="font-display text-3xl font-semibold">{{ $stats['rating'] > 0 ? $stats['rating'] : '—' }}</p>
-                        <p class="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-cocoa/70">Avg. rating</p>
-                    </div>
+                <div class="mt-8 grid max-w-xl grid-cols-2 gap-y-4 sm:grid-cols-4">
+                    @foreach ([
+                        [number_format($stats['bakeries']), 'Bakeries'],
+                        [number_format($stats['cakes']), 'Cakes'],
+                        [number_format($stats['orders']), 'Celebrations'],
+                        [$stats['rating'] > 0 ? number_format((float) $stats['rating'], 1) : '—', 'Avg. rating'],
+                    ] as [$value, $label])
+                        <div class="hero-stat">
+                            <p class="font-display text-2xl font-semibold leading-none sm:text-3xl">{{ $value }}</p>
+                            <p class="mt-1.5 text-[0.62rem] font-medium uppercase tracking-[0.1em] text-cocoa/75">{{ $label }}</p>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
-            <div class="relative">
-                <div class="absolute -left-5 top-10 hidden h-28 w-28 rounded-full bg-blush blur-2xl sm:block"></div>
-                <div class="absolute -right-4 bottom-16 hidden h-32 w-32 rounded-full bg-parchment blur-2xl sm:block"></div>
-                <div class="relative overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/50 p-2 shadow-[0_40px_100px_-50px_rgba(43,33,27,0.5)]">
-                    <img src="{{ $cms['hero_image'] }}" alt="A beautifully finished celebration cake" class="aspect-[4/5] w-full rounded-[2rem] object-cover">
+            <div class="relative mx-auto w-full max-w-[24rem] pb-10 sm:pb-8">
+                <div class="hero-arch">
+                    <img src="{{ $cms['hero_image'] }}" alt="A beautifully finished celebration cake">
                 </div>
 
-                <div class="absolute -bottom-5 left-4 right-4 rounded-2xl border border-ink/8 bg-white/95 p-4 shadow-xl backdrop-blur sm:left-8 sm:right-8">
-                    <div class="flex items-center gap-3">
-                        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" /></svg>
-                        </span>
-                        <div>
-                            <p class="text-sm font-semibold">Payments verified by PayMongo</p>
-                            <p class="text-xs text-cocoa">Your order is only confirmed after payment clears.</p>
-                        </div>
-                    </div>
+                <div class="hero-feature-badge absolute right-0 top-[8%] z-10 sm:-right-3">
+                    <svg viewBox="0 0 20 20" class="h-3.5 w-3.5 shrink-0 fill-gold" aria-hidden="true"><path d="m10 1.6 2.47 5.01 5.53.8-4 3.9.94 5.51L10 14.22 5.06 16.8 6 11.29l-4-3.9 5.53-.8L10 1.6z" /></svg>
+                    <span class="truncate">{{ $heroProduct?->is_featured ? 'Featured · '.\Illuminate\Support\Str::limit($heroProduct->name, 30) : 'Made for life’s sweetest moments' }}</span>
                 </div>
+
+                <div class="hero-review-card absolute -bottom-1 left-0 z-10 w-[13rem] p-3.5 sm:-left-5">
+                    @if ($heroReview)
+                        @include('partials.stars', ['rating' => $heroReview->rating])
+                        @if ($heroReview->comment)
+                            <blockquote class="mt-1.5 line-clamp-2 text-xs leading-4 text-ink">“{{ $heroReview->comment }}”</blockquote>
+                        @else
+                            <p class="mt-1.5 text-xs leading-4 text-ink">A customer favorite, made with care.</p>
+                        @endif
+                        <p class="mt-1.5 truncate text-[0.68rem] italic text-cocoa">— {{ $heroReview->customer?->name ?? 'SweetCrumbs customer' }}</p>
+                    @elseif ($stats['rating'] > 0)
+                        @include('partials.stars', ['rating' => $stats['rating']])
+                        <p class="mt-1.5 text-xs font-semibold text-ink">{{ number_format((float) $stats['rating'], 1) }} average customer rating</p>
+                        <p class="mt-1 text-[0.68rem] text-cocoa">Across SweetCrumbs bakeries</p>
+                    @else
+                        <p class="eyebrow text-[0.6rem]">Baked with care</p>
+                        <p class="mt-1.5 text-xs leading-4 text-ink">Find a cake made for your next celebration.</p>
+                    @endif
+                </div>
+
+                <svg viewBox="0 0 120 190" class="hero-ornament hidden sm:block" fill="none" aria-hidden="true">
+                    <path d="M8 178C49 148 76 109 98 18" stroke="currentColor" stroke-width="1.3" />
+                    <path d="M37 151c-17 1-27-6-29-20 17-1 27 6 29 20Zm18-25c-17-1-25-10-24-24 17 2 25 10 24 24Zm17-34c-16-3-22-13-19-27 16 4 22 13 19 27Zm15-31C74 53 70 42 76 29c13 8 17 18 11 32Zm-33 69c13-12 25-13 37-4-12 12-24 13-37 4Zm18-35c14-10 26-9 36 2-14 10-26 9-36-2Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M14 30h1m83 34h1m-56 91h1m68-31h1m-67 52h1" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                </svg>
             </div>
         </div>
     </section>
@@ -79,7 +101,7 @@
 
         <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($categories as $category)
-                <a href="{{ route('marketplace', ['category' => $category->slug]) }}" class="group relative overflow-hidden rounded-3xl border border-ink/8 bg-white p-6 transition hover:-translate-y-0.5 hover:border-rose/30">
+                <a href="{{ route('marketplace', ['category' => $category->slug]) }}" class="group relative overflow-hidden rounded-[1.5rem] border border-ink/10 bg-[#fffdf9] p-6 transition hover:-translate-y-0.5 hover:border-gold/40">
                     <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-blush/60 transition group-hover:scale-125"></div>
                     <div class="relative">
                         <p class="font-display text-2xl font-semibold">{{ $category->name }}</p>
@@ -125,7 +147,7 @@
 
             <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ($featuredShops as $shop)
-                    <a href="{{ route('shops.show', $shop) }}" class="group card overflow-hidden">
+                    <a href="{{ route('shops.show', $shop) }}" class="group card overflow-hidden hover:border-gold/35">
                         <div class="relative aspect-[5/3] overflow-hidden bg-parchment">
                             <img src="{{ $shop->coverUrl() }}" alt="{{ $shop->name }}" loading="lazy" class="h-full w-full object-cover transition duration-700 group-hover:scale-105">
                             <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-4 pt-12">

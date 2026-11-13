@@ -1,10 +1,10 @@
 @php($image = $product->images->first()?->url() ?? $product->imageUrl())
-<article class="group overflow-hidden rounded-3xl border border-ink/8 bg-white shadow-[0_18px_50px_-30px_rgba(43,33,27,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_26px_60px_-30px_rgba(43,33,27,0.4)]">
+<article class="group overflow-hidden rounded-[1.5rem] border border-ink/10 bg-[#fffdf9] shadow-[0_18px_50px_-30px_rgba(43,33,27,0.32)] transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_26px_60px_-30px_rgba(43,33,27,0.4)]">
     <a href="{{ route('products.show', $product) }}" class="block">
         <div class="relative aspect-[4/3] overflow-hidden bg-parchment">
             <img src="{{ $image }}" alt="{{ $product->name }}" loading="lazy" class="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]">
             @if ($product->is_featured)
-                <span class="absolute left-3 top-3 badge bg-cream/95 text-cocoa ring-ink/10">Featured</span>
+                <span class="absolute left-3 top-3 badge bg-parchment/95 text-cocoa ring-gold/25">Featured</span>
             @endif
             @if (! $product->inStock())
                 <span class="absolute right-3 top-3 badge bg-ink/85 text-cream ring-white/20">Sold out</span>

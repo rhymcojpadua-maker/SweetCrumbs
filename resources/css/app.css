@@ -55,6 +55,74 @@
         @apply mx-auto w-full max-w-7xl px-5 sm:px-6 lg:px-8;
     }
 
+    .hero-scene {
+        background:
+            radial-gradient(ellipse at 12% 18%, rgba(246, 226, 229, 0.75), transparent 42%),
+            linear-gradient(180deg, rgba(251, 247, 241, 0.15), rgba(243, 235, 224, 0.15));
+    }
+
+    .hero-heading-accent {
+        @apply font-medium italic text-rose;
+    }
+
+    .hero-arch {
+        position: relative;
+        padding: 0.45rem;
+        border: 2px solid rgba(166, 124, 99, 0.75);
+        border-radius: 48% 48% 1.5rem 1.5rem / 38% 38% 1.5rem 1.5rem;
+        background: rgba(243, 235, 224, 0.7);
+        box-shadow: 0 28px 60px -38px rgba(43, 33, 27, 0.55);
+    }
+
+    .hero-arch::after {
+        position: absolute;
+        z-index: 1;
+        inset: 0.36rem;
+        border: 1px solid rgba(166, 124, 99, 0.55);
+        border-radius: inherit;
+        content: '';
+        pointer-events: none;
+    }
+
+    .hero-arch img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 0.94;
+        border-radius: 48% 48% 1.1rem 1.1rem / 38% 38% 1.1rem 1.1rem;
+        object-fit: cover;
+    }
+
+    .hero-feature-badge,
+    .hero-review-card {
+        border: 1px solid rgba(166, 124, 99, 0.36);
+        background: rgba(251, 247, 241, 0.96);
+        box-shadow: 0 14px 36px -20px rgba(43, 33, 27, 0.45);
+        backdrop-filter: blur(12px);
+    }
+
+    .hero-feature-badge {
+        @apply inline-flex max-w-[90%] items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-cocoa;
+    }
+
+    .hero-review-card {
+        border-radius: 1rem;
+    }
+
+    .hero-stat + .hero-stat {
+        border-left: 1px solid rgba(107, 87, 72, 0.28);
+        padding-left: 0.9rem;
+    }
+
+    .hero-ornament {
+        position: absolute;
+        z-index: 2;
+        right: -1.6rem;
+        bottom: -1rem;
+        width: 7rem;
+        color: var(--color-gold);
+        pointer-events: none;
+    }
+
     .font-display {
         font-family: var(--font-display);
         font-variation-settings: 'SOFT' 60, 'WONK' 1;
