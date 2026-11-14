@@ -4,12 +4,12 @@
 
 @section('content')
     <div>
-        <p class="eyebrow">Join SweetCrumbs</p>
-        <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight">Create your customer account.</h1>
-        <p class="mt-3 text-sm text-cocoa">Save your details, keep track of orders, and get back to the cakes.</p>
+        <p class="text-[0.65rem] font-medium uppercase tracking-[0.18em] text-cocoa">Join SweetCrumbs</p>
+        <h1 class="mt-2 font-display text-2xl font-semibold leading-tight tracking-tight">Create your customer account.</h1>
+        <p class="mt-1.5 text-xs leading-5 text-ink/85">Save your details, keep track of orders, and get back to the cakes.</p>
     </div>
 
-    <form method="POST" action="{{ route('register.store') }}" class="mt-8 space-y-4">
+    <form method="POST" action="{{ route('register.store') }}" class="mt-6 space-y-4">
         @csrf
         <div>
             <label for="name" class="label">Full name</label>
@@ -38,12 +38,12 @@
         <button type="submit" class="btn-primary w-full">Create account</button>
     </form>
 
-    <p class="mt-6 text-center text-sm text-cocoa">
+    <p class="mt-4 text-center text-xs text-cocoa">
         Already have an account?
-        <a href="{{ route('login') }}" class="font-semibold text-rose hover:underline">Sign in</a>
+        <a href="{{ route('login') }}" class="font-semibold text-ink hover:text-rose">Sign in</a>
     </p>
-    <p class="mt-2 text-center text-sm text-cocoa">
+    <p class="mt-2 text-center text-xs text-cocoa">
         Want to sell your cakes?
-        <a href="{{ route('shop.register') }}" class="font-semibold text-rose hover:underline">Apply as a bakery</a>
+        <a href="{{ route('shop.register') }}" class="font-semibold text-ink hover:text-rose">Apply as a bakery</a>
     </p>
 @endsection

@@ -123,6 +123,23 @@
         pointer-events: none;
     }
 
+    .auth-cake-arch {
+        padding: 0.35rem;
+        border: 1px solid rgba(198, 161, 91, 0.75);
+        border-radius: 48% 48% 1rem 1rem / 38% 38% 1rem 1rem;
+        background: rgba(243, 235, 224, 0.12);
+        box-shadow: 0 20px 44px -28px rgba(0, 0, 0, 0.75);
+    }
+
+    .auth-cake-image {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1.12;
+        border-radius: 48% 48% 0.75rem 0.75rem / 38% 38% 0.75rem 0.75rem;
+        object-fit: cover;
+        object-position: center 56%;
+    }
+
     .font-display {
         font-family: var(--font-display);
         font-variation-settings: 'SOFT' 60, 'WONK' 1;

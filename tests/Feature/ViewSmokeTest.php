@@ -35,8 +35,21 @@ class ViewSmokeTest extends TestCase
         $this->get('/privacy')->assertOk();
         $this->get('/cart')->assertOk();
         $this->get('/track-order')->assertOk();
-        $this->get('/login')->assertOk();
-        $this->get('/register')->assertOk();
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Cakes with a story')
+            ->assertSee('Sign in to SweetCrumbs.')
+            ->assertSee('sweetcrumbs-brand.png')
+            ->assertSee('sweetcrumbs-brand-dark.png')
+            ->assertSee('Back to homepage')
+            ->assertSee('Forgot password?');
+        $this->get('/register')
+            ->assertOk()
+            ->assertSee('Join SweetCrumbs')
+            ->assertSee('Create your customer account.')
+            ->assertSee('sweetcrumbs-brand.png')
+            ->assertSee('sweetcrumbs-brand-dark.png')
+            ->assertSee('Back to homepage');
         $this->get('/sell-with-cakelle')->assertOk();
         $this->get('/orders/'.$order->order_number.'?token='.$order->public_token)->assertOk();
     }
