@@ -45,7 +45,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <p class="font-semibold text-amber-900">This order is awaiting payment.</p>
-                        <p class="mt-1 text-sm text-amber-800">Your bakery will not begin until PayMongo verifies the payment.</p>
+                        <p class="mt-1 text-sm text-amber-800">Your bakery will not begin until Xendit verifies the payment.</p>
                     </div>
                     <form method="POST" action="{{ route('payments.resume', ['order' => $order, 'token' => $order->public_token]) }}">
                         @csrf

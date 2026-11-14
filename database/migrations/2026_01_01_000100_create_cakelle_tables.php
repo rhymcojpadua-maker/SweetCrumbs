@@ -205,7 +205,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('shop_id')->constrained()->restrictOnDelete();
-            $table->string('provider', 30)->default('paymongo');
+            $table->string('provider', 30)->default('xendit');
             $table->string('provider_checkout_id')->nullable()->unique();
             $table->string('provider_payment_id')->nullable()->unique();
             $table->string('reference_number', 50)->unique();
@@ -227,7 +227,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('payment_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('provider', 30)->default('paymongo');
+            $table->string('provider', 30)->default('xendit');
             $table->string('provider_event_id')->nullable()->unique();
             $table->string('type', 30);
             $table->string('status', 30)->nullable();

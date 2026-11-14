@@ -9,4 +9,4 @@ We started SweetCrumbs because the best cakes rarely live where the biggest audi
 
 For customers, that means discovering real bakeries, comparing real cakes, and reserving a pickup or delivery without guesswork. For bakers, it means a storefront, order tools, inventory, and payments that let them focus on the work they love.
 
-Every bakery on SweetCrumbs is reviewed before it opens. Every order is tied to one bakery, so nothing is lost between storefronts. And every payment is verified by PayMongo before an order moves forward.
+Every bakery on SweetCrumbs is reviewed before it opens. Every order is tied to one bakery, so nothing is lost between storefronts. And every payment is verified by Xendit before an order moves forward.

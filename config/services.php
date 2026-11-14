@@ -28,13 +28,12 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
-    'paymongo' => [
-        'secret_key' => env('PAYMONGO_SECRET_KEY'),
-        'public_key' => env('PAYMONGO_PUBLIC_KEY'),
-        'webhook_secret' => env('PAYMONGO_WEBHOOK_SECRET'),
-        'payment_methods' => array_values(array_filter(explode(',', env('PAYMONGO_PAYMENT_METHODS', 'qrph,card,gcash,paymaya')))),
-        'currency' => env('PAYMONGO_CURRENCY', 'PHP'),
-        'base_url' => env('PAYMONGO_BASE_URL', 'https://api.paymongo.com'),
+    'xendit' => [
+        'secret_key' => env('XENDIT_SECRET_KEY'),
+        'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
+        'allowed_payment_channels' => array_values(array_filter(explode(',', env('XENDIT_ALLOWED_PAYMENT_CHANNELS', '')))),
+        'currency' => env('XENDIT_CURRENCY', 'PHP'),
+        'base_url' => env('XENDIT_BASE_URL', 'https://api.xendit.co'),
     ],
 
     'slack' => [

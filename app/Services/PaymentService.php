@@ -7,14 +7,14 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentTransaction;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 
 class PaymentService
 {
     public function __construct(
-        private readonly PayMongoGateway $gateway,
+        private readonly XenditGateway $gateway,
         private readonly InventoryService $inventoryService,
         private readonly ActivityLogger $activityLogger,
     ) {}
@@ -24,34 +24,50 @@ class PaymentService
         try {
             $session = $this->gateway->createCheckoutSession($order, $payment);
 
-            $payment->update([
-                'provider_checkout_id' => $session['id'],
-                'checkout_url' => $session['checkout_url'],
-                'status' => PaymentStatus::Pending,
-                'expires_at' => now()->addMinutes((int) config('cakelle.order_payment_window_minutes', 45)),
-                'metadata' => $session['raw'],
-                'failure_reason' => null,
-            ]);
+            DB::transaction(function () use ($order, $payment, $session) {
+                $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+                $alreadyPaid = $payment->status === PaymentStatus::Paid;
 
-            $order->update(['payment_status' => PaymentStatus::Pending]);
+                $payment->update([
+                    'provider' => 'xendit',
+                    'provider_checkout_id' => $session['id'],
+                    'checkout_url' => $session['checkout_url'],
+                    'status' => $alreadyPaid ? PaymentStatus::Paid : PaymentStatus::Pending,
+                    'expires_at' => now()->addMinutes((int) config('cakelle.order_payment_window_minutes', 45)),
+                    'metadata' => $session['raw'],
+                    'failure_reason' => null,
+                    'failed_at' => null,
+                ]);
 
-            PaymentTransaction::create([
-                'payment_id' => $payment->id,
-                'order_id' => $order->id,
-                'provider' => 'paymongo',
-                'type' => 'checkout_created',
-                'status' => 'pending',
-                'amount' => $payment->amount,
-                'payload' => $session['raw'],
-            ]);
+                if (! $alreadyPaid) {
+                    $order->update(['payment_status' => PaymentStatus::Pending]);
+                }
+
+                PaymentTransaction::create([
+                    'payment_id' => $payment->id,
+                    'order_id' => $order->id,
+                    'provider' => 'xendit',
+                    'type' => 'checkout_created',
+                    'status' => 'pending',
+                    'amount' => $payment->amount,
+                    'payload' => $session['raw'],
+                ]);
+            });
 
             return $payment->fresh();
-        } catch (RuntimeException $exception) {
-            $payment->update([
-                'status' => PaymentStatus::Failed,
-                'failure_reason' => $exception->getMessage(),
-                'failed_at' => now(),
-            ]);
+        } catch (\RuntimeException|ConnectionException $exception) {
+            DB::transaction(function () use ($payment, $exception): void {
+                $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+
+                if ($lockedPayment->status !== PaymentStatus::Paid) {
+                    $lockedPayment->update([
+                        'provider' => 'xendit',
+                        'status' => PaymentStatus::Failed,
+                        'failure_reason' => $exception->getMessage(),
+                        'failed_at' => now(),
+                    ]);
+                }
+            });
 
             throw $exception;
         }
@@ -59,24 +75,25 @@ class PaymentService
 
     public function processWebhook(array $payload): array
     {
-        $eventId = data_get($payload, 'data.id');
-        $type = data_get($payload, 'data.attributes.type') ?? data_get($payload, 'data.type');
-        $eventData = data_get($payload, 'data.attributes.data') ?? data_get($payload, 'data.data');
+        $type = data_get($payload, 'event');
+        $session = data_get($payload, 'data');
 
-        if (! $type || ! is_array($eventData)) {
+        if (! is_string($type) || ! is_array($session)) {
             return ['result' => 'ignored', 'reason' => 'Unsupported payload.'];
         }
+
+        $sessionId = data_get($session, 'payment_session_id');
+        $eventId = data_get($payload, 'id')
+            ?? ($sessionId ? $type.':'.$sessionId : null);
 
         if ($eventId && PaymentTransaction::query()->where('provider_event_id', $eventId)->exists()) {
             return ['result' => 'duplicate'];
         }
 
         return match ($type) {
-            'checkout_session.payment.paid' => $this->handleCheckoutPaid($eventData, $payload, $eventId),
-            'payment.paid' => $this->handlePaymentPaid($eventData, $payload, $eventId),
-            'payment.failed' => $this->handlePaymentFailed($eventData, $payload, $eventId),
-            'payment.refunded' => $this->handleRefunded($eventData, $payload, $eventId),
-            default => $this->recordIgnored($type, $eventData, $payload, $eventId),
+            'payment_session.completed' => $this->handleSessionCompleted($session, $payload, $eventId),
+            'payment_session.expired' => $this->handleSessionExpired($session, $payload, $eventId),
+            default => $this->recordIgnored($type, $session, $payload, $eventId),
         };
     }
 
@@ -91,67 +108,116 @@ class PaymentService
             return $payment;
         }
 
-        $paid = collect(data_get($session, 'attributes.payments', []))
-            ->contains(fn ($item) => data_get($item, 'attributes.status') === 'paid');
+        $status = data_get($session, 'status');
+        $event = match ($status) {
+            'COMPLETED' => 'payment_session.completed',
+            'EXPIRED', 'CANCELED' => 'payment_session.expired',
+            default => null,
+        };
 
-        if ($paid) {
-            $reference = data_get($session, 'attributes.reference_number');
-            $this->handleCheckoutPaid($session, ['source' => 'server_sync', 'reference_number' => $reference], null);
-
-            return $payment->fresh();
+        if ($event) {
+            $this->processWebhook(['event' => $event, 'data' => $session]);
         }
 
-        return $payment;
+        return $payment->fresh();
     }
 
-    private function handleCheckoutPaid(array $session, array $payload, ?string $eventId): array
+    private function handleSessionCompleted(array $session, array $payload, ?string $eventId): array
     {
-        $reference = data_get($session, 'attributes.reference_number') ?? data_get($session, 'reference_number');
-        if (! $reference) {
-            return ['result' => 'ignored', 'reason' => 'Missing checkout reference.'];
+        if (data_get($session, 'status') !== 'COMPLETED') {
+            return ['result' => 'ignored', 'reason' => 'Session is not completed.'];
         }
 
-        $payments = data_get($session, 'attributes.payments', []);
-        $paidPayment = collect($payments)->first(fn ($item) => data_get($item, 'attributes.status') === 'paid');
-        $amountInCentavos = (int) data_get($paidPayment, 'attributes.amount', 0);
-        $paymentId = data_get($paidPayment, 'id');
-        $method = data_get($paidPayment, 'attributes.source.type');
+        $reference = data_get($session, 'reference_id');
+        $amount = data_get($session, 'amount');
+        $sessionId = data_get($session, 'payment_session_id');
+        $paymentId = data_get($session, 'payment_id');
 
-        return $this->markPaid($reference, $amountInCentavos, $paymentId, $method, $payload, $eventId);
-    }
-
-    private function handlePaymentPaid(array $resource, array $payload, ?string $eventId): array
-    {
-        $paymentId = data_get($resource, 'id');
-        $reference = data_get($resource, 'attributes.metadata.order_reference')
-            ?? data_get($resource, 'attributes.reference_number')
-            ?? data_get($resource, 'attributes.description');
-
-        $payment = Payment::query()
-            ->when($reference, fn ($query) => $query->where('reference_number', $reference))
-            ->when(! $reference && $paymentId, fn ($query) => $query->where('provider_payment_id', $paymentId))
-            ->first();
-
-        if (! $payment) {
-            return $this->recordIgnored('payment.paid', $resource, $payload, $eventId);
+        if (! $reference || ! is_numeric($amount) || (float) $amount <= 0) {
+            return ['result' => 'ignored', 'reason' => 'Missing session reference or amount.'];
         }
 
         return $this->markPaid(
-            $payment->reference_number,
-            (int) data_get($resource, 'attributes.amount', 0),
-            $paymentId,
-            data_get($resource, 'attributes.source.type'),
+            (string) $reference,
+            (float) $amount,
+            is_string($paymentId) ? $paymentId : null,
+            null,
             $payload,
-            $eventId
+            $eventId,
+            is_string($sessionId) ? $sessionId : null,
         );
     }
 
-    private function markPaid(string $reference, int $amountInCentavos, ?string $providerPaymentId, ?string $method, array $payload, ?string $eventId): array
+    private function handleSessionExpired(array $session, array $payload, ?string $eventId): array
     {
-        return DB::transaction(function () use ($reference, $amountInCentavos, $providerPaymentId, $method, $payload, $eventId) {
+        $reference = data_get($session, 'reference_id');
+        $sessionId = data_get($session, 'payment_session_id');
+        $status = data_get($session, 'status');
+
+        if (! $reference || ! in_array($status, ['EXPIRED', 'CANCELED'], true)) {
+            return ['result' => 'ignored', 'reason' => 'Session is not expired or canceled.'];
+        }
+
+        $payment = Payment::query()->where('reference_number', $reference)->first();
+        if (! $payment) {
+            return $this->recordIgnored('payment_session.expired', $session, $payload, $eventId);
+        }
+
+        return DB::transaction(function () use ($payment, $sessionId, $payload, $eventId) {
+            $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+            $order = Order::query()->lockForUpdate()->findOrFail($payment->order_id);
+
+            if ($eventId && PaymentTransaction::query()->where('provider_event_id', $eventId)->exists()) {
+                return ['result' => 'duplicate'];
+            }
+
+            if ($payment->status === PaymentStatus::Paid) {
+                return ['result' => 'ignored', 'reason' => 'Payment already paid.'];
+            }
+
+            if ($payment->provider_checkout_id && $sessionId && $payment->provider_checkout_id !== $sessionId) {
+                return ['result' => 'ignored', 'reason' => 'Session does not match the current checkout.'];
+            }
+
+            $payment->update([
+                'provider' => 'xendit',
+                'provider_checkout_id' => $sessionId ?: $payment->provider_checkout_id,
+                'status' => PaymentStatus::Expired,
+                'failed_at' => now(),
+                'failure_reason' => 'Xendit payment session expired.',
+            ]);
+
+            if ($order->status === OrderStatus::PendingPayment) {
+                $order->status = OrderStatus::Cancelled;
+                $order->payment_status = PaymentStatus::Expired;
+                $order->cancelled_at = now();
+                $order->save();
+                $this->inventoryService->release($order, 'Xendit payment session expired');
+            }
+
+            $this->recordTransaction($payment, $order, $payload, $eventId, 'checkout_expired', 'expired');
+
+            return ['result' => 'processed'];
+        });
+    }
+
+    private function markPaid(
+        string $reference,
+        float $amount,
+        ?string $providerPaymentId,
+        ?string $method,
+        array $payload,
+        ?string $eventId,
+        ?string $sessionId,
+    ): array {
+        return DB::transaction(function () use ($reference, $amount, $providerPaymentId, $method, $payload, $eventId, $sessionId) {
             $payment = Payment::query()->where('reference_number', $reference)->lockForUpdate()->first();
             if (! $payment) {
                 return ['result' => 'ignored', 'reason' => 'Payment not found.'];
+            }
+
+            if ($eventId && PaymentTransaction::query()->where('provider_event_id', $eventId)->exists()) {
+                return ['result' => 'duplicate'];
             }
 
             $order = Order::query()->lockForUpdate()->find($payment->order_id);
@@ -159,12 +225,17 @@ class PaymentService
                 return ['result' => 'ignored', 'reason' => 'Order not found.'];
             }
 
+            if ($payment->provider_checkout_id && $sessionId && $payment->provider_checkout_id !== $sessionId) {
+                return ['result' => 'ignored', 'reason' => 'Session does not match the current checkout.'];
+            }
+
             $expected = $this->gateway->toCentavos((float) $payment->amount);
-            if ($amountInCentavos > 0 && $amountInCentavos < $expected) {
-                Log::warning('PayMongo amount mismatch', [
+            $received = $this->gateway->toCentavos($amount);
+            if ($received !== $expected) {
+                Log::warning('Xendit amount mismatch', [
                     'payment' => $payment->id,
                     'expected_centavos' => $expected,
-                    'received_centavos' => $amountInCentavos,
+                    'received_centavos' => $received,
                 ]);
 
                 return ['result' => 'ignored', 'reason' => 'Amount mismatch.'];
@@ -177,9 +248,11 @@ class PaymentService
             }
 
             $payment->update([
-                'status' => PaymentStatus::Paid,
+                'provider' => 'xendit',
+                'provider_checkout_id' => $sessionId ?: $payment->provider_checkout_id,
                 'provider_payment_id' => $providerPaymentId ?: $payment->provider_payment_id,
                 'payment_method' => $method,
+                'status' => PaymentStatus::Paid,
                 'paid_at' => now(),
                 'failure_reason' => null,
                 'metadata' => array_merge($payment->metadata ?? [], ['last_paid_payload' => $payload]),
@@ -197,7 +270,7 @@ class PaymentService
                 'shop_id' => $order->shop_id,
                 'type' => 'payment_received',
                 'title' => 'Payment received',
-                'body' => 'Payment for order '.$order->order_number.' was confirmed by PayMongo.',
+                'body' => 'Payment for order '.$order->order_number.' was confirmed by Xendit.',
                 'data' => ['order_id' => $order->id],
             ]);
 
@@ -223,73 +296,12 @@ class PaymentService
         });
     }
 
-    private function handlePaymentFailed(array $resource, array $payload, ?string $eventId): array
-    {
-        $reference = data_get($resource, 'attributes.metadata.order_reference')
-            ?? data_get($resource, 'attributes.reference_number');
-        $payment = Payment::query()->when($reference, fn ($q) => $q->where('reference_number', $reference))
-            ->orWhere('provider_payment_id', data_get($resource, 'id'))
-            ->first();
-
-        if (! $payment) {
-            return $this->recordIgnored('payment.failed', $resource, $payload, $eventId);
-        }
-
-        return DB::transaction(function () use ($payment, $resource, $payload, $eventId) {
-            $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
-            $order = Order::query()->lockForUpdate()->findOrFail($payment->order_id);
-
-            if ($payment->status === PaymentStatus::Paid) {
-                return ['result' => 'ignored', 'reason' => 'Payment already paid.'];
-            }
-
-            $payment->update([
-                'status' => PaymentStatus::Failed,
-                'failed_at' => now(),
-                'failure_reason' => data_get($resource, 'attributes.last_payment_error.message', 'The payment was declined.'),
-            ]);
-
-            $order->payment_status = PaymentStatus::Failed;
-            if ($order->status === OrderStatus::PendingPayment) {
-                $order->status = OrderStatus::Cancelled;
-                $order->cancelled_at = now();
-            }
-            $order->save();
-            $this->inventoryService->release($order, 'Payment failed');
-            $this->recordTransaction($payment, $order, $payload, $eventId, 'webhook', 'failed');
-
-            return ['result' => 'processed'];
-        });
-    }
-
-    private function handleRefunded(array $resource, array $payload, ?string $eventId): array
-    {
-        $paymentId = data_get($resource, 'attributes.payment_id') ?? data_get($resource, 'id');
-        $payment = Payment::query()->where('provider_payment_id', $paymentId)->first();
-        if (! $payment) {
-            return $this->recordIgnored('payment.refunded', $resource, $payload, $eventId);
-        }
-
-        DB::transaction(function () use ($payment, $resource, $payload, $eventId) {
-            $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
-            $order = Order::query()->lockForUpdate()->findOrFail($payment->order_id);
-            $refundedAmount = (int) data_get($resource, 'attributes.amount_refunded', 0);
-            $fullRefund = $refundedAmount >= $this->gateway->toCentavos((float) $payment->amount);
-
-            $payment->update(['status' => $fullRefund ? PaymentStatus::Refunded : PaymentStatus::PartiallyRefunded]);
-            $order->update(['payment_status' => $fullRefund ? PaymentStatus::Refunded : PaymentStatus::PartiallyRefunded]);
-            $this->recordTransaction($payment, $order, $payload, $eventId, 'webhook', 'refunded');
-        });
-
-        return ['result' => 'processed'];
-    }
-
     private function recordIgnored(string $type, array $resource, array $payload, ?string $eventId): array
     {
         PaymentTransaction::create([
             'order_id' => null,
             'payment_id' => null,
-            'provider' => 'paymongo',
+            'provider' => 'xendit',
             'provider_event_id' => $eventId,
             'type' => $type,
             'status' => 'ignored',
@@ -304,7 +316,7 @@ class PaymentService
         PaymentTransaction::create([
             'payment_id' => $payment->id,
             'order_id' => $order->id,
-            'provider' => 'paymongo',
+            'provider' => 'xendit',
             'provider_event_id' => $eventId,
             'type' => $type,
             'status' => $status,

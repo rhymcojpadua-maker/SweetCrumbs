@@ -1,13 +1,13 @@
 # SweetCrumbs
 
-SweetCrumbs is a multi-tenant cake marketplace for the Philippines. Customers discover bakeries and order celebration cakes; shop owners manage their storefront, orders, products, inventory, customers, and payments; platform admins review applications and oversee the marketplace. Payments run through PayMongo. Editorial content is managed in Statamic.
+SweetCrumbs is a multi-tenant cake marketplace for the Philippines. Customers discover bakeries and order celebration cakes; shop owners manage their storefront, orders, products, inventory, customers, and payments; platform admins review applications and oversee the marketplace. Payments run through Xendit. Editorial content is managed in Statamic.
 
 ## Stack
 
 - Laravel 12 (PHP 8.4) with Blade, Alpine.js, Tailwind CSS 4, Vite, Chart.js
 - MySQL 8
 - Statamic 6 (CMS control panel at `/cp`)
-- PayMongo Checkout Sessions + signed webhooks
+- Xendit Payment Sessions hosted checkout + verified webhooks
 
 ## Features
 
@@ -16,7 +16,7 @@ SweetCrumbs is a multi-tenant cake marketplace for the Philippines. Customers di
 - Shop dashboard: orders and status transitions, products and variants, categories, inventory movements, customers, payments, reports, storefront and fulfillment settings, profile, notifications
 - Super-admin dashboard: shop applications approve/reject/suspend/activate, users, orders, payments, activity log, platform settings, CMS links
 - Server-side pricing, stock reservation/release, preparation lead time and schedule validation
-- PayMongo Checkout, webhook signature verification, idempotent payment processing, refund and failure handling
+- Xendit hosted checkout, callback-token verification, idempotent payment processing, and session expiry handling
 - Tenant isolation enforced with `shop_id` scoping, middleware, and policies
 - Scheduled command `cakelle:expire-orders` cancels unpaid orders after the payment window and releases stock
 
@@ -77,25 +77,25 @@ All seeded accounts use the password `Password123!`.
 
 Seeded shops: Sweet Layers Manila, Butter & Bloom, The Little Oven (active), and Sugar Atelier (pending application).
 
-## Payments (PayMongo)
+## Payments (Xendit)
 
-Set the keys in `.env`:
+Set the secret API key and webhook callback token in `.env`:
 
 ```dotenv
-PAYMONGO_SECRET_KEY=sk_test_...
-PAYMONGO_PUBLIC_KEY=pk_test_...
-PAYMONGO_WEBHOOK_SECRET=whsec_...
-PAYMONGO_PAYMENT_METHODS=qrph,card,gcash,paymaya
-PAYMONGO_CURRENCY=PHP
+XENDIT_SECRET_KEY=xnd_development_...
+XENDIT_WEBHOOK_TOKEN=
+XENDIT_ALLOWED_PAYMENT_CHANNELS=
+XENDIT_CURRENCY=PHP
+XENDIT_BASE_URL=https://api.xendit.co
 ```
 
-Register a webhook in the PayMongo dashboard pointing to:
+Register a Payment Session webhook in the Xendit dashboard pointing to:
 
 ```text
-https://your-domain.test/webhooks/paymongo
+https://your-domain.test/webhooks/xendit
 ```
 
-Subscribe to `checkout_session.payment.paid`, `payment.paid`, `payment.failed`, and `payment.refunded`. When the keys are empty the UI shows an unconfigured payment state instead of simulating a payment. An order is marked paid only after a verified webhook.
+Subscribe to `payment_session.completed` and `payment_session.expired`. Copy the dashboard callback verification token to `XENDIT_WEBHOOK_TOKEN`. Leave `XENDIT_ALLOWED_PAYMENT_CHANNELS` empty to show the payment channels enabled for the account, or provide a comma-separated list of Xendit channel codes. When the secret key is empty the UI shows an unconfigured payment state instead of simulating a payment. An order is marked paid only after a verified webhook or server-side session status check.
 
 ## Statamic CMS
 
@@ -122,7 +122,7 @@ php artisan test
 Coverage:
 
 - `tests/Feature/ViewSmokeTest.php` renders every public, shop dashboard, and admin screen
-- `tests/Feature/DomainFlowTest.php` covers tenant isolation, order transitions, paid-order cancellation guard, PayMongo webhook signature/idempotency, and admin shop approval
+- `tests/Feature/DomainFlowTest.php` covers tenant isolation, order transitions, paid-order cancellation guard, Xendit webhook verification/idempotency, and admin shop approval
 
 ## Scheduled work
 
@@ -160,7 +160,7 @@ tests/Feature                   Smoke and domain flow tests
 - A cart contains products from one shop; checkout validates shop status, product availability, stock, variants, fulfillment capability, and preparation lead time server-side.
 - Prices are always recomputed on the server; client-submitted totals are ignored.
 - Stock is reserved when an order is placed and released on cancellation, rejection, payment failure, or expiry.
-- Payment status changes come only from verified PayMongo webhooks or server-side session sync.
+- Payment status changes come only from verified Xendit webhooks or server-side session sync.
 - Paid orders cannot be cancelled from the dashboard until a refund is completed.
 - Fulfillment transitions are validated (pickup uses ready-for-pickup, delivery uses out-for-delivery).
 - Every dashboard and admin query is scoped by `shop_id`; cross-shop access returns 404/403.

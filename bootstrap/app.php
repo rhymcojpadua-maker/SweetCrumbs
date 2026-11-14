@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->validateCsrfTokens(except: [
-            'webhooks/paymongo',
+            'webhooks/xendit',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

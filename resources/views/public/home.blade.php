@@ -191,7 +191,7 @@
                 @foreach ([
                     ['Find your baker', 'Browse real storefronts and compare cakes, finishes, and pickup or delivery options.'],
                     ['Make it yours', 'Choose a size, flavour, and message. Checkout validates the bakery schedule before you pay.'],
-                    ['Pay securely', 'PayMongo verifies the payment. Your bakery sees a confirmed order, not a maybe.'],
+                    ['Pay securely', 'Xendit verifies the payment. Your bakery sees a confirmed order, not a maybe.'],
                     ['Celebrate', 'Track every step from confirmed to ready, with one clear place for the details.'],
                 ] as $index => [$title, $description])
                     <li class="flex gap-4">

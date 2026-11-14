@@ -6,7 +6,7 @@ use App\Enums\FulfillmentType;
 use App\Services\CartService;
 use App\Services\CheckoutService;
 use App\Services\PaymentService;
-use App\Services\PayMongoGateway;
+use App\Services\XenditGateway;
 use App\Services\ScheduleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ class CheckoutController extends Controller
         private readonly ScheduleService $scheduleService,
         private readonly CheckoutService $checkoutService,
         private readonly PaymentService $paymentService,
-        private readonly PayMongoGateway $gateway,
+        private readonly XenditGateway $gateway,
     ) {}
 
     public function show(Request $request): View|RedirectResponse
@@ -52,7 +52,7 @@ class CheckoutController extends Controller
             'settings' => $settings,
             'datesByType' => $datesByType,
             'defaultType' => $defaultType,
-            'paymongoConfigured' => $this->gateway->isConfigured(),
+            'xenditConfigured' => $this->gateway->isConfigured(),
         ]);
     }
 
@@ -83,7 +83,7 @@ class CheckoutController extends Controller
             return redirect()->away($order->payment->fresh()->checkout_url);
         } catch (RuntimeException $exception) {
             return redirect()->route('orders.show', ['order' => $order->order_number, 'token' => $order->public_token])
-                ->with('error', 'We could not open PayMongo checkout: '.$exception->getMessage().' You can retry payment from this page.');
+                ->with('error', 'We could not open Xendit checkout: '.$exception->getMessage().' You can retry payment from this page.');
         }
     }
 }

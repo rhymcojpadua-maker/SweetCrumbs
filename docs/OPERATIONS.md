@@ -31,25 +31,24 @@ php artisan migrate:fresh --seed
 
 `CakelleDemoSeeder` is intended for demos and staging, not production.
 
-## PayMongo
+## Xendit
 
-1. Create test and live key pairs in the PayMongo dashboard.
-2. Store keys in the environment as `PAYMONGO_SECRET_KEY`, `PAYMONGO_PUBLIC_KEY`, and `PAYMONGO_WEBHOOK_SECRET`.
-3. Register `https://<host>/webhooks/paymongo` with events:
-   - `checkout_session.payment.paid`
-   - `payment.paid`
-   - `payment.failed`
-   - `payment.refunded`
-4. Keep `PAYMONGO_PAYMENT_METHODS` aligned with methods enabled on the account (default `qrph,card,gcash,paymaya`).
+1. Create a test or live secret API key in the Xendit dashboard and set `XENDIT_SECRET_KEY`.
+2. Set `XENDIT_BASE_URL=https://api.xendit.co` and `XENDIT_CURRENCY=PHP`.
+3. Register `https://<host>/webhooks/xendit` for Payment Session events:
+   - `payment_session.completed`
+   - `payment_session.expired`
+4. Copy the webhook callback verification token from the dashboard to `XENDIT_WEBHOOK_TOKEN`.
+5. Optionally set `XENDIT_ALLOWED_PAYMENT_CHANNELS` to a comma-separated list of Xendit channel codes enabled on the account. Leave it empty to allow all enabled channels.
 
 Security invariants:
 
-- Webhooks are verified with HMAC-SHA256 over `"{timestamp}.{rawBody}"` using the `te` signature for test mode and `li` for live mode. A five-minute tolerance is applied by default (`PAYMONGO_WEBHOOK_TOLERANCE`, seconds; set `0` to disable).
-- Events are idempotent by event id; replays are recorded and ignored.
-- Amounts below the expected order total are rejected and logged as warnings.
+- Webhooks must include the exact dashboard callback token in the `x-callback-token` header.
+- Session events are idempotent by event type and payment session ID; replays are recorded and ignored.
+- The completed-session amount must exactly match the expected order total.
 - Paid status is never granted from a redirect, client callback, or unverified payload.
 
-When PayMongo is not configured the checkout UI shows an explicit unconfigured state. This is intentional; do not add simulated payments.
+When Xendit is not configured the checkout UI shows an explicit unconfigured state. This is intentional; do not add simulated payments.
 
 ## Order expiry
 
@@ -104,5 +103,5 @@ Tests read `.env.testing` and use the `cakelle_test` database, `array` session/c
 | Marketplace shows duplicate categories | Categories are per shop; use `Category::marketplace()` to aggregate by slug |
 | Images missing after deploy | Run `php artisan storage:link` and confirm `public/storage` |
 | Stale views after deploy | `php artisan view:clear && php artisan view:cache` |
-| Webhook returns 401 | Confirm `PAYMONGO_WEBHOOK_SECRET`, signature header name, timestamp tolerance, and that the raw body is unmodified |
+| Webhook returns 401 | Confirm `XENDIT_WEBHOOK_TOKEN` matches the dashboard callback token and that the request includes `x-callback-token` |
 | Webhook returns 200 `ignored` | Reference number must equal the order number; check the payment row and logs |

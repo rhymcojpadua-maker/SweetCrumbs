@@ -52,7 +52,7 @@
 
             <section class="card-flat p-5 text-sm leading-6 text-cocoa">
                 <p class="font-semibold text-ink">Payment configuration</p>
-                <p class="mt-1">PayMongo credentials live in the environment file, not here. Update <span class="font-mono text-xs">PAYMONGO_SECRET_KEY</span> and the webhook secret to change the account.</p>
+                <p class="mt-1">Xendit credentials live in the environment file, not here. Set <span class="font-mono text-xs">XENDIT_SECRET_KEY</span> and <span class="font-mono text-xs">XENDIT_WEBHOOK_TOKEN</span> to enable checkout and verify payment updates.</p>
             </section>
         </aside>
     </form>

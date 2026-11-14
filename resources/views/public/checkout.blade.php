@@ -25,7 +25,7 @@
             <a href="{{ route('cart.index') }}" class="nav-link">Back to basket</a>
         </div>
 
-        @if (! $paymongoConfigured)
+        @if (! $xenditConfigured)
             <div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <p class="font-semibold">Online payment is not configured on this installation.</p>
                 <p class="mt-1">You can still place the order. It will be saved as awaiting payment, and the bakery will not begin until payment is verified.</p>
@@ -183,9 +183,9 @@
                         </label>
 
                         <button type="submit" class="mt-5 btn-primary w-full" :disabled="!date || !time">
-                            {{ $paymongoConfigured ? 'Continue to secure payment' : 'Place order' }}
+                            {{ $xenditConfigured ? 'Continue to secure payment' : 'Place order' }}
                         </button>
-                        <p class="mt-3 text-center text-xs text-cocoa">Payments are verified by PayMongo before the bakery begins.</p>
+                        <p class="mt-3 text-center text-xs text-cocoa">Payments are verified by Xendit before the bakery begins.</p>
                     </div>
                 </div>
             </aside>

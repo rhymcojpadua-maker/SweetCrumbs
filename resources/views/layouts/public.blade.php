@@ -150,7 +150,7 @@
 
             <div class="mt-12 flex flex-col gap-3 border-t border-ink/8 pt-6 text-xs text-cocoa/70 sm:flex-row sm:items-center sm:justify-between">
                 <p>&copy; {{ now()->year }} SweetCrumbs. All rights reserved.</p>
-                <p>Payments verified securely through PayMongo.</p>
+                <p>Payments verified securely through Xendit.</p>
             </div>
         </div>
     </footer>

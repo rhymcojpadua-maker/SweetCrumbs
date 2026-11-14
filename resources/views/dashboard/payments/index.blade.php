@@ -76,5 +76,5 @@
 
     <div class="mt-5">{{ $payments->links() }}</div>
 
-    <p class="mt-4 text-xs leading-5 text-cocoa">Payments are recorded only after PayMongo verifies them. Pending records may still complete if the customer returns to the checkout page.</p>
+    <p class="mt-4 text-xs leading-5 text-cocoa">Payments are recorded only after Xendit verifies them. Pending records may still complete if the customer returns to the checkout page.</p>
 @endsection

@@ -349,7 +349,7 @@ class CakelleDemoSeeder extends Seeder
                 'scheduled_date' => $scheduledDate->toDateString(),
                 'scheduled_time' => '14:00',
                 'notes' => $definition['review'] ? 'Please write "Happy celebration" on the cake.' : null,
-                'payment_method' => 'paymongo',
+                'payment_method' => 'xendit',
                 'inventory_reserved' => false,
                 'placed_at' => $placedAt,
                 'confirmed_at' => in_array($definition['status'], [OrderStatus::Confirmed, OrderStatus::Preparing, OrderStatus::Completed], true) ? $placedAt->copy()->addHours(2) : null,
@@ -373,7 +373,7 @@ class CakelleDemoSeeder extends Seeder
             $payment = Payment::create([
                 'order_id' => $order->id,
                 'shop_id' => $shop->id,
-                'provider' => 'paymongo',
+                'provider' => 'xendit',
                 'provider_payment_id' => $definition['payment'] === PaymentStatus::Paid ? 'pay_demo_'.$order->id : null,
                 'reference_number' => $order->order_number,
                 'amount' => $total,
@@ -388,7 +388,7 @@ class CakelleDemoSeeder extends Seeder
                 PaymentTransaction::create([
                     'payment_id' => $payment->id,
                     'order_id' => $order->id,
-                    'provider' => 'paymongo',
+                    'provider' => 'xendit',
                     'provider_event_id' => 'evt_demo_'.$order->id,
                     'type' => 'webhook',
                     'status' => 'paid',

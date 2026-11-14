@@ -30,7 +30,7 @@ use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\PayMongoWebhookController;
+use App\Http\Controllers\XenditWebhookController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
@@ -64,9 +64,9 @@ Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name(
 Route::post('/orders/{order}/pay', [PaymentController::class, 'resume'])->name('payments.resume');
 Route::get('/payments/return/{order}', [PaymentController::class, 'return'])->name('payment.return');
 
-Route::post('/webhooks/paymongo', PayMongoWebhookController::class)
+Route::post('/webhooks/xendit', XenditWebhookController::class)
     ->middleware('throttle:webhooks')
-    ->name('webhooks.paymongo');
+    ->name('webhooks.xendit');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');

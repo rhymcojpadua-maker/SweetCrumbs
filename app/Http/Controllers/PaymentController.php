@@ -28,7 +28,7 @@ class PaymentController extends Controller
         $payment = $order->payment;
 
         try {
-            if ($payment->checkout_url && $payment->status->value === 'pending') {
+            if ($payment->provider === 'xendit' && $payment->checkout_url && $payment->status->value === 'pending') {
                 return redirect()->away($payment->checkout_url);
             }
 
@@ -37,7 +37,7 @@ class PaymentController extends Controller
             return redirect()->away($payment->fresh()->checkout_url);
         } catch (RuntimeException $exception) {
             return redirect()->to($order->publicUrl())
-                ->with('error', 'PayMongo checkout could not be started: '.$exception->getMessage());
+                ->with('error', 'Xendit checkout could not be started: '.$exception->getMessage());
         }
     }
 
@@ -56,7 +56,7 @@ class PaymentController extends Controller
         }
 
         return redirect()->to($order->publicUrl())
-            ->with('warning', 'We are still waiting for PayMongo to confirm your payment. This page will update as soon as the payment is verified.');
+            ->with('warning', 'We are still waiting for Xendit to confirm your payment. This page will update as soon as the payment is verified.');
     }
 
     private function authorizeOrder(Request $request, Order $order): void

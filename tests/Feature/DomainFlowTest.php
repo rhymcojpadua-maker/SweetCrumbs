@@ -12,7 +12,10 @@ use App\Models\Shop;
 use App\Models\ShopCustomer;
 use App\Models\User;
 use App\Services\OrderStatusService;
+use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -71,47 +74,73 @@ class DomainFlowTest extends TestCase
         $this->assertSame(OrderStatus::PendingConfirmation, $order->fresh()->status);
     }
 
-    public function test_paymongo_webhook_marks_an_unpaid_order_paid_and_is_idempotent(): void
+    public function test_xendit_checkout_creates_and_stores_a_payment_session(): void
     {
-        config(['services.paymongo.webhook_secret' => 'whsec_test']);
+        config([
+            'services.xendit.secret_key' => 'xnd_test_key',
+            'services.xendit.base_url' => 'https://api.xendit.co',
+            'app.url' => 'https://sweetcrumbs.test',
+        ]);
+        Http::fake([
+            'api.xendit.co/sessions' => Http::response([
+                'payment_session_id' => 'ps_test_1',
+                'payment_link_url' => 'https://checkout.xendit.co/web/ps_test_1',
+            ]),
+        ]);
 
         $payment = Payment::query()->where('status', PaymentStatus::Unpaid->value)->firstOrFail();
         $order = $payment->order;
+        $result = app(PaymentService::class)->startCheckout($order, $payment);
+
+        $this->assertSame('xendit', $result->provider);
+        $this->assertSame('ps_test_1', $result->provider_checkout_id);
+        $this->assertSame('https://checkout.xendit.co/web/ps_test_1', $result->checkout_url);
+        $this->assertSame(PaymentStatus::Pending, $result->status);
+
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://api.xendit.co/sessions'
+            && $request['reference_id'] === $payment->reference_number
+            && $request['session_type'] === 'PAY'
+            && $request['mode'] === 'PAYMENT_LINK'
+            && $request['currency'] === 'PHP'
+            && str_starts_with($request['success_return_url'], 'https://sweetcrumbs.test/')
+            && str_starts_with($request['cancel_return_url'], 'https://sweetcrumbs.test/')
+            && collect($request['items'])->every(fn (array $item) => filled($item['category'])
+                && in_array($item['type'], ['PHYSICAL_PRODUCT', 'FEE'], true))
+            && collect($request['items'])->contains(fn (array $item) => $item['type'] === 'PHYSICAL_PRODUCT')
+            && (float) $request['amount'] === (float) $payment->amount);
+    }
+
+    public function test_xendit_webhook_marks_an_unpaid_order_paid_and_is_idempotent(): void
+    {
+        config(['services.xendit.webhook_token' => 'xendit_callback_test']);
+
+        $payment = Payment::query()->where('status', PaymentStatus::Unpaid->value)->firstOrFail();
+        $order = $payment->order;
+        $payment->update([
+            'provider' => 'xendit',
+            'provider_checkout_id' => 'ps_test_paid',
+            'status' => PaymentStatus::Pending,
+        ]);
 
         $payload = [
+            'id' => 'evt_test_paid_1',
+            'event' => 'payment_session.completed',
             'data' => [
-                'id' => 'evt_test_paid_1',
-                'attributes' => [
-                    'type' => 'checkout_session.payment.paid',
-                    'livemode' => false,
-                    'data' => [
-                        'id' => 'cs_test_1',
-                        'attributes' => [
-                            'reference_number' => $payment->reference_number,
-                            'payments' => [[
-                                'id' => 'pay_test_1',
-                                'attributes' => [
-                                    'status' => 'paid',
-                                    'amount' => (int) round((float) $payment->amount * 100),
-                                    'source' => ['type' => 'card'],
-                                ],
-                            ]],
-                        ],
-                    ],
-                ],
+                'payment_session_id' => 'ps_test_paid',
+                'reference_id' => $payment->reference_number,
+                'status' => 'COMPLETED',
+                'amount' => (float) $payment->amount,
+                'payment_id' => 'pay_test_1',
             ],
         ];
 
         $raw = json_encode($payload);
-        $timestamp = time();
-        $signature = hash_hmac('sha256', $timestamp.'.'.$raw, 'whsec_test');
-
         $headers = [
             'CONTENT_TYPE' => 'application/json',
-            'HTTP_PAYMONGO_SIGNATURE' => "t={$timestamp},te={$signature},li=",
+            'HTTP_X_CALLBACK_TOKEN' => 'xendit_callback_test',
         ];
 
-        $this->call('POST', '/webhooks/paymongo', [], [], [], $headers, $raw)
+        $this->call('POST', '/webhooks/xendit', [], [], [], $headers, $raw)
             ->assertOk()
             ->assertJson(['result' => 'processed']);
 
@@ -122,7 +151,7 @@ class DomainFlowTest extends TestCase
         $this->assertSame(PaymentStatus::Paid, $order->payment_status);
         $this->assertSame(OrderStatus::PendingConfirmation, $order->status);
 
-        $this->call('POST', '/webhooks/paymongo', [], [], [], $headers, $raw)
+        $this->call('POST', '/webhooks/xendit', [], [], [], $headers, $raw)
             ->assertOk()
             ->assertJson(['result' => 'duplicate']);
 
@@ -132,16 +161,76 @@ class DomainFlowTest extends TestCase
         );
     }
 
-    public function test_paymongo_webhook_rejects_an_invalid_signature(): void
+    public function test_xendit_webhook_rejects_an_invalid_callback_token(): void
     {
-        config(['services.paymongo.webhook_secret' => 'whsec_test']);
+        config(['services.xendit.webhook_token' => 'xendit_callback_test']);
 
-        $raw = json_encode(['data' => ['id' => 'evt_bad', 'attributes' => ['type' => 'payment.paid']]]);
+        $raw = json_encode(['event' => 'payment_session.completed', 'data' => []]);
 
-        $this->call('POST', '/webhooks/paymongo', [], [], [], [
+        $this->call('POST', '/webhooks/xendit', [], [], [], [
             'CONTENT_TYPE' => 'application/json',
-            'HTTP_PAYMONGO_SIGNATURE' => 't='.time().',te=not-a-real-signature',
+            'HTTP_X_CALLBACK_TOKEN' => 'not-a-real-token',
         ], $raw)->assertUnauthorized();
+    }
+
+    public function test_xendit_webhook_does_not_mark_a_payment_paid_when_amount_mismatches(): void
+    {
+        config(['services.xendit.webhook_token' => 'xendit_callback_test']);
+
+        $payment = Payment::query()->where('status', PaymentStatus::Unpaid->value)->firstOrFail();
+        $order = $payment->order;
+        $payment->update([
+            'provider' => 'xendit',
+            'provider_checkout_id' => 'ps_test_mismatch',
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        $payload = [
+            'event' => 'payment_session.completed',
+            'data' => [
+                'payment_session_id' => 'ps_test_mismatch',
+                'reference_id' => $payment->reference_number,
+                'status' => 'COMPLETED',
+                'amount' => (float) $payment->amount - 1,
+            ],
+        ];
+
+        $this->call('POST', '/webhooks/xendit', [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_CALLBACK_TOKEN' => 'xendit_callback_test',
+        ], json_encode($payload))
+            ->assertOk()
+            ->assertJson(['result' => 'ignored', 'reason' => 'Amount mismatch.']);
+
+        $this->assertSame(PaymentStatus::Pending, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::PendingPayment, $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Unpaid, $order->fresh()->payment_status);
+    }
+
+    public function test_xendit_expired_session_cancels_the_unpaid_order(): void
+    {
+        $payment = Payment::query()->where('status', PaymentStatus::Unpaid->value)->firstOrFail();
+        $order = $payment->order;
+        $payment->update([
+            'provider' => 'xendit',
+            'provider_checkout_id' => 'ps_test_expired',
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        $result = app(PaymentService::class)->processWebhook([
+            'id' => 'evt_test_expired',
+            'event' => 'payment_session.expired',
+            'data' => [
+                'payment_session_id' => 'ps_test_expired',
+                'reference_id' => $payment->reference_number,
+                'status' => 'EXPIRED',
+            ],
+        ]);
+
+        $this->assertSame('processed', $result['result']);
+        $this->assertSame(PaymentStatus::Expired, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::Cancelled, $order->fresh()->status);
+        $this->assertSame(PaymentStatus::Expired, $order->fresh()->payment_status);
     }
 
     public function test_admin_can_approve_a_pending_shop_application(): void

@@ -117,7 +117,7 @@ class CheckoutService
                 'scheduled_date' => $data['scheduled_date'],
                 'scheduled_time' => $data['scheduled_time'],
                 'notes' => $data['notes'] ?? null,
-                'payment_method' => 'paymongo',
+                'payment_method' => 'xendit',
                 'placed_at' => now(),
             ]);
 
@@ -153,10 +153,10 @@ class CheckoutService
             Payment::create([
                 'order_id' => $order->id,
                 'shop_id' => $shop->id,
-                'provider' => 'paymongo',
+                'provider' => 'xendit',
                 'reference_number' => $order->order_number,
                 'amount' => $total,
-                'currency' => config('services.paymongo.currency', 'PHP'),
+                'currency' => config('services.xendit.currency', 'PHP'),
                 'status' => PaymentStatus::Unpaid,
             ]);
 

@@ -30,7 +30,7 @@
                 </div>
             </div>
 
-            <p class="relative text-xs text-cream/45">Payments verified through PayMongo · Made in the Philippines</p>
+            <p class="relative text-xs text-cream/45">Payments verified through Xendit · Made in the Philippines</p>
         </aside>
 
         <main class="flex flex-col">

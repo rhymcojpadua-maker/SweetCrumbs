@@ -208,7 +208,7 @@
                 <div class="rounded-3xl bg-ink p-6 text-cream">
                     <p class="eyebrow text-cream/60">A note on ordering</p>
                     <p class="mt-3 font-display text-2xl font-semibold leading-snug">Every cake is made to order by one bakery.</p>
-                    <p class="mt-3 text-sm leading-6 text-cream/70">Your basket can only hold cakes from one bakery at a time. Payment is verified by PayMongo before the bakery begins.</p>
+                    <p class="mt-3 text-sm leading-6 text-cream/70">Your basket can only hold cakes from one bakery at a time. Payment is verified by Xendit before the bakery begins.</p>
                 </div>
 
                 <div class="mt-5 card-flat p-5 text-sm leading-6 text-cocoa">

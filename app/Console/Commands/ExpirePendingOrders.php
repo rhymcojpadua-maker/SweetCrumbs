@@ -13,7 +13,7 @@ class ExpirePendingOrders extends Command
 {
     protected $signature = 'cakelle:expire-orders';
 
-    protected $description = 'Cancel orders whose PayMongo payment window has expired and release stock.';
+    protected $description = 'Cancel orders whose Xendit payment window has expired and release stock.';
 
     public function handle(OrderStatusService $statusService): int
     {
@@ -53,7 +53,7 @@ class ExpirePendingOrders extends Command
                 PaymentTransaction::create([
                     'payment_id' => $payment->id,
                     'order_id' => $order->id,
-                    'provider' => 'paymongo',
+                    'provider' => 'xendit',
                     'type' => 'checkout_expired',
                     'status' => 'expired',
                     'amount' => $payment->amount,

@@ -7,6 +7,6 @@ updated_label: 'Last updated November 2026'
 ---
 SweetCrumbs is a marketplace that connects customers with independent bakeries. Each bakery is responsible for the cakes it makes, its ingredients, allergen information, and fulfillment promises.
 
-Orders are confirmed only after PayMongo verifies payment. Cakes are prepared to order and require the advance notice shown at checkout. Cancellation is available before a bakery confirms an order; after confirmation, please contact the bakery directly.
+Orders are confirmed only after Xendit verifies payment. Cakes are prepared to order and require the advance notice shown at checkout. Cancellation is available before a bakery confirms an order; after confirmation, please contact the bakery directly.
 
 We ask customers to provide accurate contact details, choose realistic fulfillment dates, and communicate allergies clearly. Bakeries agree to keep their menus, stock, and schedules current.

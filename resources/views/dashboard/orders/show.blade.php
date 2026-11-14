@@ -109,7 +109,7 @@
                         </div>
                         <div>
                             <p class="label">Method</p>
-                            <p class="font-medium">{{ $order->payment->method ?: 'PayMongo checkout' }}</p>
+                            <p class="font-medium">{{ $order->payment->method ?: 'Xendit checkout' }}</p>
                         </div>
                         <div>
                             <p class="label">Amount</p>
