@@ -13,6 +13,7 @@ use App\Models\ShopCustomer;
 use App\Models\User;
 use App\Services\OrderStatusService;
 use App\Services\PaymentService;
+use App\Services\XenditGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -78,6 +79,7 @@ class DomainFlowTest extends TestCase
     {
         config([
             'services.xendit.secret_key' => 'xnd_test_key',
+            'services.xendit.webhook_token' => 'xendit_callback_test',
             'services.xendit.base_url' => 'https://api.xendit.co',
             'app.url' => 'https://sweetcrumbs.test',
         ]);
@@ -108,6 +110,62 @@ class DomainFlowTest extends TestCase
                 && in_array($item['type'], ['PHYSICAL_PRODUCT', 'FEE'], true))
             && collect($request['items'])->contains(fn (array $item) => $item['type'] === 'PHYSICAL_PRODUCT')
             && (float) $request['amount'] === (float) $payment->amount);
+    }
+
+    public function test_xendit_is_not_ready_without_both_credentials(): void
+    {
+        config([
+            'services.xendit.secret_key' => 'xnd_test_key',
+            'services.xendit.webhook_token' => '',
+        ]);
+
+        $this->assertFalse(app(XenditGateway::class)->isConfigured());
+
+        config(['services.xendit.webhook_token' => 'xendit_callback_test']);
+
+        $this->assertTrue(app(XenditGateway::class)->isConfigured());
+    }
+
+    public function test_checkout_connection_failure_returns_to_the_order_instead_of_a_server_error(): void
+    {
+        config([
+            'services.xendit.secret_key' => 'xnd_test_key',
+            'services.xendit.webhook_token' => 'xendit_callback_test',
+            'services.xendit.base_url' => 'https://api.xendit.co',
+            'app.url' => 'https://sweetcrumbs.test',
+        ]);
+        Http::fake(['api.xendit.co/sessions' => Http::failedConnection()]);
+
+        $payment = Payment::query()->where('status', PaymentStatus::Unpaid->value)->firstOrFail();
+        $order = $payment->order;
+
+        $this->post('/orders/'.$order->id.'/pay?token='.$order->public_token)
+            ->assertRedirect($order->publicUrl())
+            ->assertSessionHas('error');
+
+        $this->assertSame(PaymentStatus::Failed, $payment->fresh()->status);
+        $this->assertSame(OrderStatus::PendingPayment, $order->fresh()->status);
+    }
+
+    public function test_provider_status_sync_handles_a_network_failure(): void
+    {
+        config([
+            'services.xendit.secret_key' => 'xnd_test_key',
+            'services.xendit.webhook_token' => 'xendit_callback_test',
+            'services.xendit.base_url' => 'https://api.xendit.co',
+        ]);
+        Http::fake(['api.xendit.co/sessions/ps_test_sync' => Http::failedConnection()]);
+
+        $payment = Payment::query()->where('status', PaymentStatus::Unpaid->value)->firstOrFail();
+        $payment->update([
+            'provider' => 'xendit',
+            'provider_checkout_id' => 'ps_test_sync',
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        $result = app(PaymentService::class)->syncFromProvider($payment);
+
+        $this->assertSame(PaymentStatus::Pending, $result->status);
     }
 
     public function test_xendit_webhook_marks_an_unpaid_order_paid_and_is_idempotent(): void

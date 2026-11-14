@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Services\PaymentService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -35,9 +36,9 @@ class PaymentController extends Controller
             $this->paymentService->startCheckout($order->load('items', 'shop'), $payment);
 
             return redirect()->away($payment->fresh()->checkout_url);
-        } catch (RuntimeException $exception) {
+        } catch (RuntimeException|ConnectionException $exception) {
             return redirect()->to($order->publicUrl())
-                ->with('error', 'Xendit checkout could not be started: '.$exception->getMessage());
+                ->with('error', 'We could not connect to Xendit right now. Check your order status before trying payment again.');
         }
     }
 

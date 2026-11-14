@@ -95,7 +95,7 @@ Register a Payment Session webhook in the Xendit dashboard pointing to:
 https://your-domain.test/webhooks/xendit
 ```
 
-Subscribe to `payment_session.completed` and `payment_session.expired`. Copy the dashboard callback verification token to `XENDIT_WEBHOOK_TOKEN`. Leave `XENDIT_ALLOWED_PAYMENT_CHANNELS` empty to show the payment channels enabled for the account, or provide a comma-separated list of Xendit channel codes. When the secret key is empty the UI shows an unconfigured payment state instead of simulating a payment. An order is marked paid only after a verified webhook or server-side session status check.
+Subscribe to `payment_session.completed` and `payment_session.expired`. Copy the dashboard callback verification token to `XENDIT_WEBHOOK_TOKEN`. Leave `XENDIT_ALLOWED_PAYMENT_CHANNELS` empty to show the payment channels enabled for the account, or provide a comma-separated list of Xendit channel codes. When either the secret key or webhook token is missing, the UI shows an unconfigured payment state instead of simulating a payment. An order is marked paid only after a verified webhook or server-side session status check.
 
 ## Statamic CMS
 

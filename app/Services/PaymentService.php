@@ -56,6 +56,11 @@ class PaymentService
 
             return $payment->fresh();
         } catch (\RuntimeException|ConnectionException $exception) {
+            Log::warning('Xendit checkout request failed', [
+                'payment_id' => $payment->id,
+                'message' => $exception->getMessage(),
+            ]);
+
             DB::transaction(function () use ($payment, $exception): void {
                 $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Payment;
-use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -13,13 +13,14 @@ class XenditGateway
 {
     public function isConfigured(): bool
     {
-        return filled(config('services.xendit.secret_key'));
+        return filled(config('services.xendit.secret_key'))
+            && filled(config('services.xendit.webhook_token'));
     }
 
     public function createCheckoutSession(Order $order, Payment $payment): array
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Xendit is not configured. Add XENDIT_SECRET_KEY to the environment.');
+            throw new RuntimeException('Xendit is not configured. Set XENDIT_SECRET_KEY and XENDIT_WEBHOOK_TOKEN.');
         }
 
         $currency = config('services.xendit.currency', 'PHP');
@@ -146,7 +147,7 @@ class XenditGateway
             ]);
 
             return null;
-        } catch (RequestException $exception) {
+        } catch (ConnectionException $exception) {
             Log::warning('Xendit checkout retrieval failed', [
                 'session_id' => $sessionId,
                 'message' => $exception->getMessage(),

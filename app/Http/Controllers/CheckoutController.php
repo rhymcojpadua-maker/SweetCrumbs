@@ -8,6 +8,7 @@ use App\Services\CheckoutService;
 use App\Services\PaymentService;
 use App\Services\XenditGateway;
 use App\Services\ScheduleService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -81,9 +82,9 @@ class CheckoutController extends Controller
             $this->paymentService->startCheckout($order, $order->payment);
 
             return redirect()->away($order->payment->fresh()->checkout_url);
-        } catch (RuntimeException $exception) {
+        } catch (RuntimeException|ConnectionException $exception) {
             return redirect()->route('orders.show', ['order' => $order->order_number, 'token' => $order->public_token])
-                ->with('error', 'We could not open Xendit checkout: '.$exception->getMessage().' You can retry payment from this page.');
+                ->with('error', 'We could not connect to Xendit right now. Your order is saved; check its status before trying payment again.');
         }
     }
 }

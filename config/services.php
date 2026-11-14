@@ -31,7 +31,10 @@ return [
     'xendit' => [
         'secret_key' => env('XENDIT_SECRET_KEY'),
         'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
-        'allowed_payment_channels' => array_values(array_filter(explode(',', env('XENDIT_ALLOWED_PAYMENT_CHANNELS', '')))),
+        'allowed_payment_channels' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', env('XENDIT_ALLOWED_PAYMENT_CHANNELS', ''))
+        ))),
         'currency' => env('XENDIT_CURRENCY', 'PHP'),
         'base_url' => env('XENDIT_BASE_URL', 'https://api.xendit.co'),
     ],

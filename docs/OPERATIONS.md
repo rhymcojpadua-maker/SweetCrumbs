@@ -23,6 +23,8 @@ Never enable `APP_DEBUG` in production. Rotate `APP_KEY` only with a planned ses
 6. Restart queue workers and PHP-FPM/Octane
 7. Verify `/`, `/login`, `/admin`, and one webhook test event
 
+For a live launch, use `APP_ENV=production`, `APP_DEBUG=false`, a stable `APP_KEY`, a public HTTPS `APP_URL`, production database credentials, and the Xendit live secret key and callback token from the same live account. The application environment currently used for development is not a production configuration. Set a real mail transport if outbound email is enabled.
+
 Run seeders only on a fresh environment:
 
 ```powershell
