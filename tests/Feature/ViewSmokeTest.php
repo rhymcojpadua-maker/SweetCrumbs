@@ -17,6 +17,18 @@ class ViewSmokeTest extends TestCase
 
     protected bool $seed = true;
 
+    public function test_asset_urls_use_the_forwarded_https_scheme(): void
+    {
+        $response = $this->withServerVariables(['HTTP_X_FORWARDED_PROTO' => 'https'])
+            ->get('/')
+            ->assertOk();
+
+        $this->assertMatchesRegularExpression(
+            '#href="https://localhost(?::\\d+)?/build/assets/app-[^"]+\\.css"#',
+            $response->getContent(),
+        );
+    }
+
     public function test_public_pages_render(): void
     {
         $shop = Shop::query()->where('status', 'active')->firstOrFail();
