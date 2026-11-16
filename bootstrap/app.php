@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAccountActive;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureShopOperational;
+use App\Http\Middleware\EnsureShopSubscription;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
             'account.active' => EnsureAccountActive::class,
             'shop.operational' => EnsureShopOperational::class,
+            'shop.subscription' => EnsureShopSubscription::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

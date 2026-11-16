@@ -7,12 +7,16 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentTransaction;
+use App\Models\PlatformSetting;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\ShopCustomer;
+use App\Models\ShopSubscription;
+use App\Models\ShopSubscriptionPayment;
 use App\Models\User;
 use App\Services\OrderStatusService;
 use App\Services\PaymentService;
+use App\Services\ShopSubscriptionService;
 use App\Services\XenditGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -291,10 +295,261 @@ class DomainFlowTest extends TestCase
         $this->assertSame(PaymentStatus::Expired, $order->fresh()->payment_status);
     }
 
+    public function test_subscription_is_unpaid_and_accessible_until_admin_configures_a_price(): void
+    {
+        $owner = User::query()->where('email', 'owner@sweetlayers.ph')->firstOrFail();
+
+        $this->actingAs($owner)->get('/dashboard')->assertOk();
+        $this->actingAs($owner)->get('/dashboard/subscription')
+            ->assertOk()
+            ->assertSee('Subscriptions are not enabled yet')
+            ->assertSee('You will not be charged');
+        $this->actingAs($owner)->post('/dashboard/subscription/checkout')
+            ->assertRedirect(route('dashboard.subscription.show'))
+            ->assertSessionHas('warning');
+
+        $this->assertDatabaseCount('shop_subscription_payments', 0);
+    }
+
+    public function test_admin_configuring_a_price_grants_existing_active_bakeries_thirty_days(): void
+    {
+        $admin = User::query()->where('email', 'admin@cakelle.ph')->firstOrFail();
+        $shop = Shop::query()->where('status', 'active')->firstOrFail();
+
+        $this->actingAs($admin)->patch('/admin/settings', [
+            'platform_name' => 'SweetCrumbs',
+            'support_email' => 'hello@sweetcrumbs.ph',
+            'support_phone' => '+63 917 000 0000',
+            'bakery_subscription_monthly_price' => '299.00',
+        ])->assertRedirect();
+
+        $subscription = $shop->subscription()->firstOrFail();
+        $this->assertSame('trialing', $subscription->status);
+        $this->assertTrue($subscription->period_ends_at->between(now()->addDays(29), now()->addDays(31)));
+        $this->assertSame(299.0, app(ShopSubscriptionService::class)->monthlyPrice());
+    }
+
+    public function test_subscription_checkout_creates_one_xendit_session_and_reuses_pending_checkout(): void
+    {
+        config([
+            'services.xendit.secret_key' => 'xnd_test_key',
+            'services.xendit.webhook_token' => 'xendit_callback_test',
+            'services.xendit.base_url' => 'https://api.xendit.co',
+            'app.url' => 'https://sweetcrumbs.test',
+        ]);
+        PlatformSetting::set('bakery_subscription_monthly_price', 299);
+        Http::fake([
+            'api.xendit.co/sessions' => Http::response([
+                'payment_session_id' => 'ps_subscription_1',
+                'payment_link_url' => 'https://checkout.xendit.co/web/ps_subscription_1',
+            ]),
+        ]);
+
+        $owner = User::query()->where('email', 'owner@sweetlayers.ph')->firstOrFail();
+        $shop = $owner->shop;
+        $subscription = ShopSubscription::create([
+            'shop_id' => $shop->id,
+            'status' => 'expired',
+        ]);
+
+        $this->actingAs($owner)->post('/dashboard/subscription/checkout')
+            ->assertRedirect('https://checkout.xendit.co/web/ps_subscription_1');
+        PlatformSetting::set('bakery_subscription_monthly_price', 399);
+        $this->actingAs($owner)->post('/dashboard/subscription/checkout')
+            ->assertRedirect('https://checkout.xendit.co/web/ps_subscription_1');
+
+        $payment = ShopSubscriptionPayment::query()->where('shop_subscription_id', $subscription->id)->firstOrFail();
+        $this->assertSame('pending', $payment->status);
+        $this->assertSame(299.0, (float) $payment->amount);
+        $this->assertSame('ps_subscription_1', $payment->provider_checkout_id);
+        $this->assertSame(1, ShopSubscriptionPayment::query()->count());
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://api.xendit.co/sessions'
+            && $request['reference_id'] === $payment->reference_number
+            && $request['amount'] === 299.0
+            && $request['currency'] === 'PHP'
+            && data_get($request->data(), 'metadata.purpose') === 'shop_subscription'
+            && str_starts_with($request['success_return_url'], 'https://sweetcrumbs.test/'));
+        Http::assertSentCount(1);
+    }
+
+    public function test_subscription_checkout_failure_does_not_grant_access(): void
+    {
+        config([
+            'services.xendit.secret_key' => 'xnd_test_key',
+            'services.xendit.webhook_token' => 'xendit_callback_test',
+            'services.xendit.base_url' => 'https://api.xendit.co',
+            'app.url' => 'https://sweetcrumbs.test',
+        ]);
+        PlatformSetting::set('bakery_subscription_monthly_price', 299);
+        Http::fake(['api.xendit.co/sessions' => Http::failedConnection()]);
+
+        $owner = User::query()->where('email', 'owner@sweetlayers.ph')->firstOrFail();
+        $subscription = ShopSubscription::create([
+            'shop_id' => $owner->shop->id,
+            'status' => 'expired',
+        ]);
+
+        $this->actingAs($owner)->post('/dashboard/subscription/checkout')
+            ->assertRedirect(route('dashboard.subscription.show'))
+            ->assertSessionHas('error');
+
+        $payment = ShopSubscriptionPayment::query()->where('shop_subscription_id', $subscription->id)->firstOrFail();
+        $this->assertSame('failed', $payment->status);
+        $this->assertFalse($subscription->fresh()->hasAccess());
+    }
+
+    public function test_subscription_webhook_activates_a_month_and_is_idempotent(): void
+    {
+        config(['services.xendit.webhook_token' => 'xendit_callback_test']);
+        PlatformSetting::set('bakery_subscription_monthly_price', 299);
+
+        $owner = User::query()->where('email', 'owner@sweetlayers.ph')->firstOrFail();
+        $subscription = ShopSubscription::create([
+            'shop_id' => $owner->shop->id,
+            'status' => 'expired',
+        ]);
+        $payment = ShopSubscriptionPayment::create([
+            'shop_subscription_id' => $subscription->id,
+            'provider' => 'xendit',
+            'provider_checkout_id' => 'ps_subscription_paid',
+            'reference_number' => 'SC-SUB-TEST-PAID',
+            'amount' => 299,
+            'currency' => 'PHP',
+            'status' => 'pending',
+        ]);
+        $payload = [
+            'id' => 'evt_subscription_paid',
+            'event' => 'payment_session.completed',
+            'data' => [
+                'payment_session_id' => 'ps_subscription_paid',
+                'reference_id' => $payment->reference_number,
+                'status' => 'COMPLETED',
+                'amount' => 299,
+                'metadata' => ['purpose' => 'shop_subscription'],
+            ],
+        ];
+        $headers = [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_CALLBACK_TOKEN' => 'xendit_callback_test',
+        ];
+
+        $this->call('POST', '/webhooks/xendit', [], [], [], $headers, json_encode($payload))
+            ->assertOk()
+            ->assertJson(['result' => 'processed']);
+
+        $subscription->refresh();
+        $this->assertSame('active', $subscription->status);
+        $this->assertTrue($subscription->period_ends_at->between(now()->addDays(29), now()->addDays(32)));
+        $this->assertSame('paid', $payment->fresh()->status);
+
+        $this->call('POST', '/webhooks/xendit', [], [], [], $headers, json_encode($payload))
+            ->assertOk()
+            ->assertJson(['result' => 'duplicate']);
+        $this->assertSame(1, ShopSubscriptionPayment::query()->where('provider_event_id', 'evt_subscription_paid')->count());
+    }
+
+    public function test_subscription_webhook_does_not_activate_when_amount_mismatches(): void
+    {
+        config(['services.xendit.webhook_token' => 'xendit_callback_test']);
+        PlatformSetting::set('bakery_subscription_monthly_price', 299);
+
+        $owner = User::query()->where('email', 'owner@sweetlayers.ph')->firstOrFail();
+        $subscription = ShopSubscription::create([
+            'shop_id' => $owner->shop->id,
+            'status' => 'expired',
+        ]);
+        $payment = ShopSubscriptionPayment::create([
+            'shop_subscription_id' => $subscription->id,
+            'provider' => 'xendit',
+            'provider_checkout_id' => 'ps_subscription_mismatch',
+            'reference_number' => 'SC-SUB-TEST-MISMATCH',
+            'amount' => 299,
+            'currency' => 'PHP',
+            'status' => 'pending',
+        ]);
+
+        $this->call('POST', '/webhooks/xendit', [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_CALLBACK_TOKEN' => 'xendit_callback_test',
+        ], json_encode([
+            'event' => 'payment_session.completed',
+            'data' => [
+                'payment_session_id' => 'ps_subscription_mismatch',
+                'reference_id' => $payment->reference_number,
+                'status' => 'COMPLETED',
+                'amount' => 298,
+                'metadata' => ['purpose' => 'shop_subscription'],
+            ],
+        ]))->assertOk()->assertJson(['result' => 'ignored', 'reason' => 'Subscription amount mismatch.']);
+
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('expired', $subscription->fresh()->status);
+    }
+
+    public function test_expired_renewal_checkout_does_not_end_current_access(): void
+    {
+        config(['services.xendit.webhook_token' => 'xendit_callback_test']);
+        PlatformSetting::set('bakery_subscription_monthly_price', 299);
+
+        $owner = User::query()->where('email', 'owner@sweetlayers.ph')->firstOrFail();
+        $periodEnd = now()->addDays(10);
+        $subscription = ShopSubscription::create([
+            'shop_id' => $owner->shop->id,
+            'status' => 'active',
+            'period_ends_at' => $periodEnd,
+        ]);
+        $payment = ShopSubscriptionPayment::create([
+            'shop_subscription_id' => $subscription->id,
+            'provider' => 'xendit',
+            'provider_checkout_id' => 'ps_subscription_expired',
+            'reference_number' => 'SC-SUB-TEST-EXPIRED',
+            'amount' => 299,
+            'currency' => 'PHP',
+            'status' => 'pending',
+        ]);
+
+        $this->call('POST', '/webhooks/xendit', [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_CALLBACK_TOKEN' => 'xendit_callback_test',
+        ], json_encode([
+            'event' => 'payment_session.expired',
+            'data' => [
+                'payment_session_id' => 'ps_subscription_expired',
+                'reference_id' => $payment->reference_number,
+                'status' => 'EXPIRED',
+                'metadata' => ['purpose' => 'shop_subscription'],
+            ],
+        ]))->assertOk()->assertJson(['result' => 'processed']);
+
+        $this->assertSame('expired', $payment->fresh()->status);
+        $this->assertSame('active', $subscription->fresh()->status);
+        $this->assertTrue($subscription->fresh()->period_ends_at->isFuture());
+    }
+
+    public function test_expired_subscription_blocks_seller_and_storefront_until_paid(): void
+    {
+        PlatformSetting::set('bakery_subscription_monthly_price', 299);
+
+        $owner = User::query()->where('email', 'owner@sweetlayers.ph')->firstOrFail();
+        $shop = $owner->shop;
+        ShopSubscription::create([
+            'shop_id' => $shop->id,
+            'status' => 'active',
+            'period_ends_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($owner)->get('/dashboard')
+            ->assertRedirect(route('dashboard.subscription.show'));
+        $this->actingAs($owner)->get('/dashboard/subscription')->assertOk();
+        $this->get('/bakeries/'.$shop->slug)->assertNotFound();
+        $this->assertSame(0, Shop::query()->active()->whereKey($shop->id)->count());
+    }
+
     public function test_admin_can_approve_a_pending_shop_application(): void
     {
         $admin = User::query()->where('email', 'admin@cakelle.ph')->firstOrFail();
         $shop = Shop::query()->where('status', 'pending')->firstOrFail();
+        PlatformSetting::set('bakery_subscription_monthly_price', 299);
 
         $this->actingAs($admin)
             ->patch('/admin/shops/'.$shop->id.'/approve')
@@ -304,6 +559,7 @@ class DomainFlowTest extends TestCase
         $this->assertSame('active', $shop->status->value);
         $this->assertNotNull($shop->approved_at);
         $this->assertTrue($shop->owner->fresh()->is_active);
+        $this->assertSame('trialing', $shop->subscription()->firstOrFail()->status);
     }
 
     public function test_shop_owner_cannot_access_the_admin_area(): void

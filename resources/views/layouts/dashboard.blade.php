@@ -13,6 +13,7 @@
     $settingsNav = [
         ['label' => 'Storefront', 'route' => 'dashboard.storefront.edit', 'active' => 'dashboard.storefront.*', 'icon' => 'storefront'],
         ['label' => 'Fulfillment', 'route' => 'dashboard.fulfillment.edit', 'active' => 'dashboard.fulfillment.*', 'icon' => 'calendar'],
+        ['label' => 'Subscription', 'route' => 'dashboard.subscription.show', 'active' => 'dashboard.subscription.*', 'icon' => 'payments'],
         ['label' => 'Notifications', 'route' => 'dashboard.notifications.index', 'active' => 'dashboard.notifications.*', 'icon' => 'bell'],
         ['label' => 'Your profile', 'route' => 'dashboard.profile.edit', 'active' => 'dashboard.profile.*', 'icon' => 'user'],
     ];

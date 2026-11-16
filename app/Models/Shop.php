@@ -73,6 +73,11 @@ class Shop extends Model
         return $this->hasOne(ShopSetting::class);
     }
 
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(ShopSubscription::class);
+    }
+
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
@@ -110,7 +115,16 @@ class Shop extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status', ShopStatus::Active->value);
+        $query->where('status', ShopStatus::Active->value);
+
+        $price = PlatformSetting::get('bakery_subscription_monthly_price');
+        if (is_numeric($price) && (float) $price > 0) {
+            $query->whereHas('subscription', fn ($subscription) => $subscription
+                ->whereIn('status', ['trialing', 'active'])
+                ->where('period_ends_at', '>', now()));
+        }
+
+        return $query;
     }
 
     public function scopeFeatured($query)
@@ -120,7 +134,15 @@ class Shop extends Model
 
     public function isActive(): bool
     {
-        return $this->status === ShopStatus::Active;
+        if ($this->status !== ShopStatus::Active) {
+            return false;
+        }
+
+        $price = PlatformSetting::get('bakery_subscription_monthly_price');
+
+        return ! is_numeric($price)
+            || (float) $price <= 0
+            || ($this->subscription?->hasAccess() ?? false);
     }
 
     public function isPending(): bool

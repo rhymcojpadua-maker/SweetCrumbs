@@ -124,6 +124,10 @@ class ViewSmokeTest extends TestCase
             '/admin/content',
         ];
 
+        $this->actingAs($admin)->get('/admin')
+            ->assertOk()
+            ->assertSee('sweetcrumbs-brand-dark.png');
+
         foreach ($paths as $path) {
             $this->actingAs($admin)->get($path)->assertOk();
         }

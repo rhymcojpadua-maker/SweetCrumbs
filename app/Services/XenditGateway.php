@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Shop;
+use App\Models\ShopSubscriptionPayment;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -86,42 +88,46 @@ class XenditGateway
             $attributes['allowed_payment_channels'] = $allowedChannels;
         }
 
-        $response = Http::withBasicAuth((string) config('services.xendit.secret_key'), '')
-            ->acceptJson()
-            ->asJson()
-            ->timeout(25)
-            ->post(rtrim((string) config('services.xendit.base_url'), '/').'/sessions', $attributes);
+        return $this->createSession($attributes, ['order' => $order->order_number]);
+    }
 
-        if ($response->failed()) {
-            Log::warning('Xendit checkout creation failed', [
-                'order' => $order->order_number,
-                'status' => $response->status(),
-                'body' => $response->json() ?? $response->body(),
-            ]);
-            $message = $response->json('message')
-                ?? $response->json('error_code')
-                ?? 'Xendit could not create a payment session.';
-            throw new RuntimeException($message);
+    public function createSubscriptionCheckoutSession(ShopSubscriptionPayment $payment, Shop $shop): array
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException('Xendit is not configured. Set XENDIT_SECRET_KEY and XENDIT_WEBHOOK_TOKEN.');
         }
 
-        $data = $response->json();
-        $checkoutUrl = data_get($data, 'payment_link_url');
-        $sessionId = data_get($data, 'payment_session_id');
-
-        if (! $sessionId || ! $checkoutUrl) {
-            Log::warning('Xendit checkout response is missing required fields', [
-                'order' => $order->order_number,
-                'response' => $data,
-            ]);
-
-            throw new RuntimeException('Xendit returned an incomplete checkout session.');
+        $appUrl = rtrim((string) config('app.url'), '/');
+        $appUrlParts = parse_url($appUrl);
+        if (strtolower((string) ($appUrlParts['scheme'] ?? '')) !== 'https' || empty($appUrlParts['host'])) {
+            throw new RuntimeException('Xendit checkout requires APP_URL to be set to a public HTTPS URL.');
         }
 
-        return [
-            'id' => $sessionId,
-            'checkout_url' => $checkoutUrl,
-            'raw' => $data,
+        $attributes = [
+            'reference_id' => $payment->reference_number,
+            'session_type' => 'PAY',
+            'mode' => 'PAYMENT_LINK',
+            'amount' => (float) $payment->amount,
+            'currency' => $payment->currency,
+            'country' => 'PH',
+            'locale' => 'en',
+            'description' => 'SweetCrumbs monthly bakery subscription for '.$shop->name,
+            'success_return_url' => $appUrl.'/'.ltrim(route('dashboard.subscription.show', ['checkout_return' => 1], false), '/'),
+            'cancel_return_url' => $appUrl.'/'.ltrim(route('dashboard.subscription.show', [], false), '/'),
+            'expires_at' => $payment->expires_at?->toIso8601String(),
+            'metadata' => [
+                'purpose' => 'shop_subscription',
+                'shop_id' => (string) $shop->id,
+                'subscription_payment_id' => (string) $payment->id,
+            ],
         ];
+
+        $allowedChannels = config('services.xendit.allowed_payment_channels', []);
+        if ($allowedChannels !== []) {
+            $attributes['allowed_payment_channels'] = $allowedChannels;
+        }
+
+        return $this->createSession($attributes, ['subscription_payment_id' => $payment->id]);
     }
 
     public function retrieveCheckoutSession(string $sessionId): ?array
@@ -179,5 +185,43 @@ class XenditGateway
     public function toCentavos(float $amount): int
     {
         return (int) round($amount * 100);
+    }
+
+    private function createSession(array $attributes, array $context): array
+    {
+        $response = Http::withBasicAuth((string) config('services.xendit.secret_key'), '')
+            ->acceptJson()
+            ->asJson()
+            ->timeout(25)
+            ->post(rtrim((string) config('services.xendit.base_url'), '/').'/sessions', $attributes);
+
+        if ($response->failed()) {
+            Log::warning('Xendit checkout creation failed', array_merge($context, [
+                'status' => $response->status(),
+                'body' => $response->json() ?? $response->body(),
+            ]));
+            $message = $response->json('message')
+                ?? $response->json('error_code')
+                ?? 'Xendit could not create a payment session.';
+            throw new RuntimeException($message);
+        }
+
+        $data = $response->json();
+        $checkoutUrl = data_get($data, 'payment_link_url');
+        $sessionId = data_get($data, 'payment_session_id');
+
+        if (! $sessionId || ! $checkoutUrl) {
+            Log::warning('Xendit checkout response is missing required fields', array_merge($context, [
+                'response' => $data,
+            ]));
+
+            throw new RuntimeException('Xendit returned an incomplete checkout session.');
+        }
+
+        return [
+            'id' => $sessionId,
+            'checkout_url' => $checkoutUrl,
+            'raw' => $data,
+        ];
     }
 }

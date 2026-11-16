@@ -6,6 +6,7 @@ use App\Enums\ShopStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use App\Services\ActivityLogger;
+use App\Services\ShopSubscriptionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -64,7 +65,7 @@ class ShopController extends Controller
         return view('admin.shops.show', compact('shop', 'recentOrders', 'revenue'));
     }
 
-    public function approve(Shop $shop, ActivityLogger $logger): RedirectResponse
+    public function approve(Shop $shop, ActivityLogger $logger, ShopSubscriptionService $subscriptions): RedirectResponse
     {
         $shop->update([
             'status' => ShopStatus::Active,
@@ -72,6 +73,7 @@ class ShopController extends Controller
             'suspended_at' => null,
             'rejection_reason' => null,
         ]);
+        $subscriptions->grantTrialIfNeeded($shop);
 
         $shop->owner->update(['is_active' => true]);
 
@@ -136,13 +138,14 @@ class ShopController extends Controller
         return back()->with('success', 'Shop suspended.');
     }
 
-    public function activate(Shop $shop, ActivityLogger $logger): RedirectResponse
+    public function activate(Shop $shop, ActivityLogger $logger, ShopSubscriptionService $subscriptions): RedirectResponse
     {
         $shop->update([
             'status' => ShopStatus::Active,
             'approved_at' => $shop->approved_at ?? now(),
             'suspended_at' => null,
         ]);
+        $subscriptions->grantTrialIfNeeded($shop);
 
         $shop->owner->appNotifications()->create([
             'shop_id' => $shop->id,

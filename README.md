@@ -13,10 +13,11 @@ SweetCrumbs is a multi-tenant cake marketplace for the Philippines. Customers di
 
 - Public marketplace: home, cake catalogue, bakery directory, product pages, cart, checkout, public order tracking and receipts
 - Shop onboarding: apply to sell, pending/suspended states, owner dashboard
-- Shop dashboard: orders and status transitions, products and variants, categories, inventory movements, customers, payments, reports, storefront and fulfillment settings, profile, notifications
+- Shop dashboard: orders and status transitions, products and variants, categories, inventory movements, customers, payments, reports, storefront and fulfillment settings, monthly subscriptions, profile, notifications
 - Super-admin dashboard: shop applications approve/reject/suspend/activate, users, orders, payments, activity log, platform settings, CMS links
 - Server-side pricing, stock reservation/release, preparation lead time and schedule validation
 - Xendit hosted checkout, callback-token verification, idempotent payment processing, and session expiry handling
+- Admin-configurable bakery subscription pricing with a 30-day initial grace period and verified Xendit renewals
 - Tenant isolation enforced with `shop_id` scoping, middleware, and policies
 - Scheduled command `cakelle:expire-orders` cancels unpaid orders after the payment window and releases stock
 
@@ -97,6 +98,8 @@ https://your-domain.test/webhooks/xendit
 
 Subscribe to `payment_session.completed` and `payment_session.expired`. Copy the dashboard callback verification token to `XENDIT_WEBHOOK_TOKEN`. Leave `XENDIT_ALLOWED_PAYMENT_CHANNELS` empty to show the payment channels enabled for the account, or provide a comma-separated list of Xendit channel codes. When either the secret key or webhook token is missing, the UI shows an unconfigured payment state instead of simulating a payment. An order is marked paid only after a verified webhook or server-side session status check.
 
+Bakery subscriptions use the same Xendit credentials and webhook. Configure the monthly bakery price in **Admin → Platform settings**; leave it blank to keep subscriptions disabled and avoid charging or restricting bakeries. Existing active bakeries receive 30 days' grace when a price is first set, and newly approved bakeries receive 30 days from approval. Renewals are manual, and an expired subscription pauses the bakery's storefront and dashboard until payment is confirmed.
+
 ## Statamic CMS
 
 The CMS uses Statamic's file user repository (`users/*.yaml`) on a dedicated `cp` guard, separate from the Laravel app accounts on the `web` guard. This keeps the free single-user control panel working while the marketplace keeps its own `users` table. A super user is already included.
@@ -122,7 +125,7 @@ php artisan test
 Coverage:
 
 - `tests/Feature/ViewSmokeTest.php` renders every public, shop dashboard, and admin screen
-- `tests/Feature/DomainFlowTest.php` covers tenant isolation, order transitions, paid-order cancellation guard, Xendit webhook verification/idempotency, and admin shop approval
+- `tests/Feature/DomainFlowTest.php` covers tenant isolation, order transitions, paid-order cancellation guard, Xendit order and subscription webhook verification/idempotency, subscription access, and admin shop approval
 
 ## Scheduled work
 

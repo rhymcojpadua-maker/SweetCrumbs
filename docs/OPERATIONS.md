@@ -52,6 +52,12 @@ Security invariants:
 
 When Xendit is not configured the checkout UI shows an explicit unconfigured state. This is intentional; do not add simulated payments.
 
+## Bakery subscriptions
+
+Set the monthly bakery price in **Admin → Platform settings** after Xendit checkout and the `payment_session.completed` / `payment_session.expired` webhook events are configured. Leave the field blank to disable subscriptions; bakeries will not be charged or access-restricted while no price is set.
+
+When a price is first configured, existing active bakeries receive a 30-day grace period. Newly approved bakeries receive 30 days from approval. Subscriptions renew manually by month through Xendit; the application does not create automatic recurring charges. Once a period expires, the storefront is removed from the marketplace and the seller dashboard redirects to the subscription page until a verified payment completes. A checkout redirect by itself never activates a subscription.
+
 ## Order expiry
 
 `cakelle:expire-orders` runs every five minutes via `routes/console.php`. It cancels orders still pending payment after `cakelle.order_payment_window_minutes` (default 45) and releases reserved inventory.

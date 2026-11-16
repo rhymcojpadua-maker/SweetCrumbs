@@ -25,14 +25,15 @@ use App\Http\Controllers\Dashboard\ShopOrderController;
 use App\Http\Controllers\Dashboard\ShopPaymentController;
 use App\Http\Controllers\Dashboard\ShopProductController;
 use App\Http\Controllers\Dashboard\StorefrontController;
+use App\Http\Controllers\Dashboard\SubscriptionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\XenditWebhookController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\XenditWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -84,6 +85,13 @@ Route::middleware(['auth', 'account.active', 'role:shop_owner'])->group(function
     Route::get('/dashboard/suspended', [DashboardController::class, 'suspended'])->name('dashboard.suspended');
 
     Route::prefix('dashboard')->name('dashboard.')->middleware('shop.operational')->group(function () {
+        Route::get('/subscription', [SubscriptionController::class, 'show'])->name('subscription.show');
+        Route::post('/subscription/checkout', [SubscriptionController::class, 'checkout'])
+            ->middleware('throttle:5,1')
+            ->name('subscription.checkout');
+    });
+
+    Route::prefix('dashboard')->name('dashboard.')->middleware(['shop.operational', 'shop.subscription'])->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
 
         Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');

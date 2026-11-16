@@ -41,6 +41,15 @@
                     </label>
                 </div>
             </section>
+
+            <section class="card p-5 sm:p-6">
+                <h2 class="font-display text-2xl font-semibold">Bakery subscription</h2>
+                <div class="mt-5 max-w-sm">
+                    <label for="bakery_subscription_monthly_price" class="label">Monthly price (PHP)</label>
+                    <input type="number" name="bakery_subscription_monthly_price" id="bakery_subscription_monthly_price" value="{{ old('bakery_subscription_monthly_price', $settings['bakery_subscription_monthly_price']) }}" min="1" max="99999999.99" step="0.01" class="input" placeholder="Leave blank to disable subscriptions">
+                    <p class="mt-2 text-xs leading-5 text-cocoa">Leave blank to keep subscriptions disabled. Existing active bakeries get 30 days' grace when you set the price for the first time; newly approved bakeries get 30 days from approval.</p>
+                </div>
+            </section>
         </div>
 
         <aside class="space-y-5">
