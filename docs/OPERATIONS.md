@@ -15,13 +15,15 @@ Never enable `APP_DEBUG` in production. Rotate `APP_KEY` only with a planned ses
 
 ## Deploy checklist
 
-1. `composer install --no-dev --optimize-autoloader`
-2. `npm ci && npm run build`
-3. `php artisan migrate --force`
-4. `php artisan storage:link` (first deploy only)
-5. `php artisan config:cache && php artisan route:cache && php artisan view:cache`
-6. Restart queue workers and PHP-FPM/Octane
-7. Verify `/`, `/login`, `/admin`, and one webhook test event
+1. Build the production Docker image from the repository root.
+2. Set `APP_ENV=production`, `APP_DEBUG=false`, a stable `APP_KEY`, public HTTPS `APP_URL`, database credentials, and Xendit credentials in the hosting provider's environment settings. Do not copy `.env` into the image.
+3. Run `php artisan migrate --force` after the production database is configured.
+4. Configure persistent storage for `storage/app/public` if shops will upload images.
+5. Verify `/`, `/login`, `/admin`, and one webhook test event.
+
+### Render
+
+Use the repository root as the service root and select the Docker runtime. The root `Dockerfile` builds Vite assets, installs production Composer dependencies, serves Laravel's `public` directory with Apache, and listens on Render's port `10000`. Set environment variables in Render rather than committing a production `.env` file. Configure a persistent disk mounted at `/var/www/html/storage/app/public` to retain uploaded files across deploys.
 
 For a live launch, use `APP_ENV=production`, `APP_DEBUG=false`, a stable `APP_KEY`, a public HTTPS `APP_URL`, production database credentials, and the Xendit live secret key and callback token from the same live account. The application environment currently used for development is not a production configuration. Set a real mail transport if outbound email is enabled.
 
