@@ -18,7 +18,7 @@
                 <div class="pointer-events-none absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-gold/10 blur-3xl"></div>
 
                 <a href="{{ route('home') }}" class="relative inline-flex w-fit items-center" aria-label="SweetCrumbs home">
-                    <img src="{{ asset('sweetcrumbs-brand-dark.png') }}?v={{ filemtime(public_path('sweetcrumbs-brand-dark.png')) }}" alt="SweetCrumbs" class="h-auto w-[clamp(15rem,22vw,19rem)]">
+                    @include('partials.brand-logo', ['class' => 'h-auto w-[clamp(15rem,22vw,19rem)]', 'variant' => 'dark'])
                 </a>
 
                 <div class="relative flex flex-1 flex-col justify-center py-8">
@@ -47,7 +47,7 @@
             <main class="flex min-h-screen flex-col">
                 <header class="flex items-center justify-between px-5 py-4 sm:px-8 lg:justify-end">
                     <a href="{{ route('home') }}" class="inline-flex items-center lg:hidden" aria-label="SweetCrumbs home">
-                        <img src="{{ asset('sweetcrumbs-brand.png') }}?v={{ filemtime(public_path('sweetcrumbs-brand.png')) }}" alt="SweetCrumbs" class="h-auto w-40">
+                        @include('partials.brand-logo', ['class' => 'h-auto w-40'])
                     </a>
                     <a href="{{ route('home') }}" class="inline-flex items-center gap-2 rounded-lg border border-ink/15 bg-cream/70 px-3 py-1.5 text-xs font-medium text-ink transition hover:bg-white">
                         <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" class="size-3.5">
@@ -72,7 +72,7 @@
                 <div class="absolute -bottom-24 right-0 h-96 w-96 rounded-full bg-gold/15 blur-3xl"></div>
 
                 <a href="{{ route('home') }}" class="relative flex items-center gap-2.5">
-                    @include('partials.brand-logo', ['class' => 'h-24 w-auto'])
+                    @include('partials.brand-logo', ['class' => 'h-24 w-auto', 'variant' => 'dark'])
                 </a>
 
                 <div class="relative max-w-md">

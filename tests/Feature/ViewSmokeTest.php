@@ -51,19 +51,34 @@ class ViewSmokeTest extends TestCase
             ->assertOk()
             ->assertSee('Cakes with a story')
             ->assertSee('Sign in to SweetCrumbs.')
-            ->assertSee('sweetcrumbs-brand.png')
-            ->assertSee('sweetcrumbs-brand-dark.png')
+            ->assertSee('sweetcrumbs-logo-dark.png')
+            ->assertSee('sweetcrumbs-logo.png')
+            ->assertSee('SweetCrumbs')
             ->assertSee('Back to homepage')
             ->assertSee('Forgot password?');
         $this->get('/register')
             ->assertOk()
             ->assertSee('Join SweetCrumbs')
             ->assertSee('Create your customer account.')
-            ->assertSee('sweetcrumbs-brand.png')
-            ->assertSee('sweetcrumbs-brand-dark.png')
+            ->assertSee('sweetcrumbs-logo-dark.png')
+            ->assertSee('sweetcrumbs-logo.png')
+            ->assertSee('SweetCrumbs')
             ->assertSee('Back to homepage');
         $this->get('/sell-with-cakelle')->assertOk();
         $this->get('/orders/'.$order->order_number.'?token='.$order->public_token)->assertOk();
+    }
+
+    public function test_shop_cover_urls_are_unique_when_no_cover_is_uploaded(): void
+    {
+        $shops = Shop::query()->where('status', 'active')->limit(3)->get();
+
+        $this->assertGreaterThanOrEqual(3, $shops->count());
+
+        $shops->each(fn (Shop $shop) => $shop->update(['cover_path' => null]));
+
+        $urls = $shops->map(fn (Shop $shop) => $shop->coverUrl())->unique()->values();
+
+        $this->assertCount(3, $urls);
     }
 
     public function test_checkout_renders_with_a_basket(): void
@@ -138,7 +153,8 @@ class ViewSmokeTest extends TestCase
 
         $this->actingAs($admin)->get('/admin')
             ->assertOk()
-            ->assertSee('sweetcrumbs-brand-dark.png');
+            ->assertSee('sweetcrumbs-logo-dark.png')
+            ->assertSee('SweetCrumbs');
 
         foreach ($paths as $path) {
             $this->actingAs($admin)->get($path)->assertOk();

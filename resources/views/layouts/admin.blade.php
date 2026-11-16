@@ -33,7 +33,7 @@
     <aside class="fixed inset-y-0 left-0 z-50 flex w-[17rem] -translate-x-full flex-col bg-ink text-cream transition-transform duration-200 lg:translate-x-0" :class="sidebar ? 'translate-x-0' : '-translate-x-full'">
         <div class="flex h-16 items-center justify-between border-b border-white/10 px-5">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5">
-                <img src="{{ asset('sweetcrumbs-brand-dark.png') }}?v={{ filemtime(public_path('sweetcrumbs-brand-dark.png')) }}" alt="SweetCrumbs" class="h-10 w-auto">
+                @include('partials.brand-logo', ['class' => 'h-10 w-auto', 'variant' => 'dark'])
                 <span class="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cream/70">Admin</span>
             </a>
             <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-cream/70 hover:bg-white/10 lg:hidden" @click="sidebar = false" aria-label="Close menu">

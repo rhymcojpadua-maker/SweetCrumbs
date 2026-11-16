@@ -162,12 +162,29 @@ class Shop extends Model
 
     public function coverUrl(): string
     {
-        return $this->assetUrl($this->cover_path, 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1600&q=80');
+        return $this->assetUrl($this->cover_path, $this->defaultCoverFallbackUrl());
     }
 
     public function storefrontUrl(): string
     {
         return route('shops.show', $this);
+    }
+
+    private function defaultCoverFallbackUrl(): string
+    {
+        $fallbacks = [
+            'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1600&q=80',
+            'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&q=80',
+            'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&w=1600&q=80',
+            'https://images.unsplash.com/photo-1483695028939-5bb13f8648b0?auto=format&fit=crop&w=1600&q=80',
+            'https://images.unsplash.com/photo-1535141192574-5d4897c12636?auto=format&fit=crop&w=1600&q=80',
+            'https://images.unsplash.com/photo-1521305916504-4a1121188589?auto=format&fit=crop&w=1600&q=80',
+        ];
+
+        $seed = $this->slug ?: $this->name ?: (string) $this->id;
+        $index = abs((int) crc32(strtolower($seed))) % count($fallbacks);
+
+        return $fallbacks[$index];
     }
 
     private function assetUrl(?string $path, string $fallback): string
