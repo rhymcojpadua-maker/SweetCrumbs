@@ -2,7 +2,7 @@ super: true
 name: 'Cakelle Admin'
 email: admin@cakelle.ph
 id: 11cf6d7e-47e6-4863-93bb-7fb506fd5d45
-password_hash: $2y$04$TgNzO4mfH0MxIqUx8tshQOiUiwU8/j0CCERD.7KpOsO43kmQngrFu
+password_hash: $2y$12$LWOneN1kIkyCOgPMCVXF2uL8fzAT17opcqma5GnwJ1ZrNaYUiZfH6
 preferences:
   collections:
     testimonials:
