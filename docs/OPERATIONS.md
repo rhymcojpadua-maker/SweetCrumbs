@@ -19,7 +19,7 @@ Never enable `APP_DEBUG` in production. Rotate `APP_KEY` only with a planned ses
 2. Set `APP_ENV=production`, `APP_DEBUG=false`, a stable `APP_KEY`, public HTTPS `APP_URL`, database credentials, and Xendit credentials in the hosting provider's environment settings. Do not copy `.env` into the image.
 3. Run `php artisan migrate --force` after the production database is configured.
 4. Configure persistent storage for `storage/app/public` if shops will upload images.
-5. Verify `/`, `/login`, `/admin`, and one webhook test event.
+5. Verify `/`, `/login`, `/admin`, `/cp`, and one webhook test event.
 
 ### Render
 
@@ -109,6 +109,7 @@ Tests read `.env.testing` and use the `cakelle_test` database, `array` session/c
 | Symptom | Check |
 | --- | --- |
 | 500 on dashboard notification page | View composer must bind `unreadNotificationCount` for `dashboard.notifications.index` |
+| 500 after signing in to `/cp` | Check the production Laravel log and confirm the latest app version is deployed. This project fixes Statamic users to the `file` repository. Clear any stale cached configuration with `php artisan config:clear` and restart the app. An unknown `last_login` column indicates an old cached Eloquent repository setting or an outdated database schema. |
 | `Call to undefined method ...::authorize()` | Base `App\Http\Controllers\Controller` must use `AuthorizesRequests` |
 | Marketplace shows duplicate categories | Categories are per shop; use `Category::marketplace()` to aggregate by slug |
 | Images missing after deploy | Run `php artisan storage:link` and confirm `public/storage` |

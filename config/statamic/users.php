@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'repository' => env('STATAMIC_USERS_REPOSITORY', 'file'),
+    'repository' => 'file',
 
     'repositories' => [
 
