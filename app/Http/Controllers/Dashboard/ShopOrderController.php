@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
 use App\Services\OrderStatusService;
+use App\Services\PaymentService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -100,5 +101,19 @@ class ShopOrderController extends Controller
         }
 
         return back()->with('success', 'Order '.$order->order_number.' updated.');
+    }
+
+    public function markCashReceived(Request $request, Order $order, PaymentService $paymentService): RedirectResponse
+    {
+        $shop = $request->user()->shop;
+        abort_unless((int) $order->shop_id === (int) $shop->id, 404);
+
+        try {
+            $paymentService->markCashOnDeliveryPaid($order);
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors());
+        }
+
+        return back()->with('success', 'Cash payment for order '.$order->order_number.' recorded.');
     }
 }

@@ -10,6 +10,7 @@ use App\Models\PaymentTransaction;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class PaymentService
 {
@@ -76,6 +77,78 @@ class PaymentService
 
             throw $exception;
         }
+    }
+
+    public function markCashOnDeliveryPaid(Order $order): Payment
+    {
+        return DB::transaction(function () use ($order) {
+            $payment = Payment::query()->where('order_id', $order->id)->latest('id')->lockForUpdate()->firstOrFail();
+            $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+
+            if (
+                $order->payment_method !== 'cash_on_delivery'
+                || $order->fulfillment_type->value !== 'delivery'
+                || $payment->provider !== 'manual'
+                || $payment->payment_method !== 'cash_on_delivery'
+            ) {
+                throw ValidationException::withMessages([
+                    'payment' => 'This order does not have a cash-on-delivery payment.',
+                ]);
+            }
+
+            if ($payment->status === PaymentStatus::Paid) {
+                return $payment;
+            }
+
+            if (! in_array($order->status, [OrderStatus::OutForDelivery, OrderStatus::Completed], true)) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Cash can only be recorded once the order is out for delivery.',
+                ]);
+            }
+
+            if ($payment->status !== PaymentStatus::Unpaid) {
+                throw ValidationException::withMessages([
+                    'payment' => 'This payment is no longer awaiting cash collection.',
+                ]);
+            }
+
+            $payment->update([
+                'status' => PaymentStatus::Paid,
+                'paid_at' => now(),
+                'failure_reason' => null,
+                'failed_at' => null,
+            ]);
+            $order->update(['payment_status' => PaymentStatus::Paid]);
+
+            PaymentTransaction::create([
+                'payment_id' => $payment->id,
+                'order_id' => $order->id,
+                'provider' => 'manual',
+                'type' => 'cash_on_delivery_collected',
+                'status' => 'paid',
+                'amount' => $payment->amount,
+            ]);
+
+            if ($order->customer_id) {
+                $order->customer->appNotifications()->create([
+                    'shop_id' => $order->shop_id,
+                    'type' => 'payment_confirmed',
+                    'title' => 'Cash payment received',
+                    'body' => 'The bakery confirmed cash payment for order '.$order->order_number.'.',
+                    'data' => ['order_id' => $order->id],
+                ]);
+            }
+
+            $this->activityLogger->log(
+                'payment.paid',
+                'Cash on delivery collected for order '.$order->order_number,
+                $order,
+                $order->shop,
+                ['payment_id' => $payment->id, 'method' => 'cash_on_delivery']
+            );
+
+            return $payment->fresh();
+        });
     }
 
     public function processWebhook(array $payload): array

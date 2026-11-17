@@ -37,6 +37,13 @@ class CheckoutService
         }
 
         $type = FulfillmentType::from($data['fulfillment_type']);
+        $cashOnDelivery = $data['payment_method'] === 'cash_on_delivery';
+        if ($cashOnDelivery && $type !== FulfillmentType::Delivery) {
+            throw ValidationException::withMessages([
+                'payment_method' => 'Cash on delivery is only available for delivery orders.',
+            ]);
+        }
+
         $settings = $shop->settings;
         if ($type === FulfillmentType::Pickup && ! $settings?->pickup_enabled) {
             throw ValidationException::withMessages(['fulfillment_type' => 'This bakery does not offer pickup.']);
@@ -100,7 +107,7 @@ class CheckoutService
 
         $total = round($subtotal + $deliveryFee, 2);
 
-        $order = DB::transaction(function () use ($request, $data, $cart, $shop, $type, $pricedItems, $subtotal, $deliveryFee, $total) {
+        $order = DB::transaction(function () use ($request, $data, $cart, $shop, $type, $pricedItems, $subtotal, $deliveryFee, $total, $cashOnDelivery) {
             $order = Order::create([
                 'shop_id' => $shop->id,
                 'customer_id' => $request->user()?->id,
@@ -112,12 +119,12 @@ class CheckoutService
                 'subtotal' => $subtotal,
                 'delivery_fee' => $deliveryFee,
                 'total' => $total,
-                'status' => OrderStatus::PendingPayment,
+                'status' => $cashOnDelivery ? OrderStatus::PendingConfirmation : OrderStatus::PendingPayment,
                 'payment_status' => PaymentStatus::Unpaid,
                 'scheduled_date' => $data['scheduled_date'],
                 'scheduled_time' => $data['scheduled_time'],
                 'notes' => $data['notes'] ?? null,
-                'payment_method' => 'xendit',
+                'payment_method' => $data['payment_method'],
                 'placed_at' => now(),
             ]);
 
@@ -153,11 +160,12 @@ class CheckoutService
             Payment::create([
                 'order_id' => $order->id,
                 'shop_id' => $shop->id,
-                'provider' => 'xendit',
+                'provider' => $cashOnDelivery ? 'manual' : 'xendit',
                 'reference_number' => $order->order_number,
                 'amount' => $total,
                 'currency' => config('services.xendit.currency', 'PHP'),
                 'status' => PaymentStatus::Unpaid,
+                'payment_method' => $cashOnDelivery ? 'cash_on_delivery' : null,
             ]);
 
             return $order;

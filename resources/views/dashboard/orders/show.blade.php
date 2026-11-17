@@ -109,7 +109,7 @@
                         </div>
                         <div>
                             <p class="label">Method</p>
-                            <p class="font-medium">{{ $order->payment->method ?: 'Xendit checkout' }}</p>
+                            <p class="font-medium">{{ $order->payment_method === 'cash_on_delivery' ? 'Cash on delivery' : 'Online payment' }}</p>
                         </div>
                         <div>
                             <p class="label">Amount</p>
@@ -125,6 +125,15 @@
                             <p class="font-medium">{{ ($order->payment->paid_at ?? $order->payment->created_at)?->format('M j, Y g:i A') }}</p>
                         </div>
                     </div>
+                    @if ($order->payment_method === 'cash_on_delivery' && $order->payment->status === \App\Enums\PaymentStatus::Unpaid)
+                        <p class="mt-4 rounded-xl bg-parchment/60 px-4 py-3 text-sm leading-6 text-cocoa">Collect ₱{{ number_format((float) $order->total, 0) }} in cash when delivering this order.</p>
+                        @if (in_array($order->status, [\App\Enums\OrderStatus::OutForDelivery, \App\Enums\OrderStatus::Completed], true))
+                            <form method="POST" action="{{ route('dashboard.orders.cash-payment', $order) }}" class="mt-4">
+                                @csrf
+                                <button type="submit" class="btn-primary w-full">Mark cash received</button>
+                            </form>
+                        @endif
+                    @endif
                 @else
                     <p class="mt-3 text-sm text-cocoa">No payment record yet.</p>
                 @endif

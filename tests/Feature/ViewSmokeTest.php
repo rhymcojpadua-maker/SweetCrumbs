@@ -68,6 +68,21 @@ class ViewSmokeTest extends TestCase
         $this->get('/orders/'.$order->order_number.'?token='.$order->public_token)->assertOk();
     }
 
+    public function test_statamic_admin_can_sign_in_to_the_control_panel(): void
+    {
+        $this->get('/cp/auth/login')->assertOk();
+
+        $this->post('/cp/auth/login', [
+            'email' => 'admin@cakelle.ph',
+            'password' => 'Password123!',
+        ], ['X-Inertia' => 'true'])
+            ->assertStatus(409)
+            ->assertHeader('X-Inertia-Location');
+
+        $this->assertAuthenticated('cp');
+        $this->get('/cp/dashboard')->assertOk();
+    }
+
     public function test_shop_cover_urls_are_unique_when_no_cover_is_uploaded(): void
     {
         $shops = Shop::query()->where('status', 'active')->limit(3)->get();
@@ -97,7 +112,7 @@ class ViewSmokeTest extends TestCase
             'customizations' => [],
         ]);
 
-        $this->actingAs($customer)->get('/checkout')->assertOk();
+        $this->actingAs($customer)->get('/checkout')->assertOk()->assertSee('Cash on delivery');
     }
 
     public function test_shop_dashboard_pages_render(): void

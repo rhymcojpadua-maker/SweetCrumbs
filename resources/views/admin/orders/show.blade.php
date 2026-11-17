@@ -9,6 +9,7 @@
         <div class="flex flex-wrap items-center gap-2">
             <span class="badge {{ $order->status->badgeClasses() }}">{{ $order->status->label() }}</span>
             <span class="badge {{ $order->payment_status->badgeClasses() }}">{{ $order->payment_status->label() }}</span>
+            <span class="text-sm text-cocoa">{{ $order->payment_method === 'cash_on_delivery' ? 'Cash on delivery' : 'Online payment' }}</span>
         </div>
         <a href="{{ route('admin.orders.index') }}" class="btn-secondary btn-sm">All orders</a>
     </div>

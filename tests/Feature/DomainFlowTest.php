@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\FulfillmentType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentTransaction;
@@ -16,6 +19,7 @@ use App\Models\ShopSubscriptionPayment;
 use App\Models\User;
 use App\Services\OrderStatusService;
 use App\Services\PaymentService;
+use App\Services\ScheduleService;
 use App\Services\ShopSubscriptionService;
 use App\Services\XenditGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,6 +64,90 @@ class DomainFlowTest extends TestCase
         $order->refresh();
         $this->assertSame(OrderStatus::Confirmed, $order->status);
         $this->assertNotNull($order->confirmed_at);
+    }
+
+    public function test_cash_on_delivery_order_skips_xendit_and_can_be_marked_paid_when_delivered(): void
+    {
+        config([
+            'services.xendit.secret_key' => 'xnd_test_key',
+            'services.xendit.webhook_token' => 'xendit_callback_test',
+        ]);
+        Http::fake();
+
+        $customer = User::query()->where('email', 'customer@cakelle.ph')->firstOrFail();
+        $owner = User::query()->where('email', 'owner@sweetlayers.ph')->firstOrFail();
+        $shop = $owner->shop;
+        $product = Product::query()->where('shop_id', $shop->id)->where('is_active', true)->firstOrFail();
+
+        $cart = Cart::create(['user_id' => $customer->id, 'shop_id' => $shop->id]);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $product->id,
+            'product_variant_id' => $product->defaultVariant()?->id,
+            'quantity' => 1,
+            'unit_price' => $product->priceFor($product->defaultVariant()),
+            'options_hash' => hash('sha256', 'cash-on-delivery-test'),
+            'customizations' => [],
+        ]);
+
+        $dates = app(ScheduleService::class)->availableDates(
+            $shop,
+            FulfillmentType::Delivery,
+            (int) $product->preparation_hours
+        );
+        $this->assertNotEmpty($dates);
+        $date = $dates[0];
+
+        $this->actingAs($customer)
+            ->post('/checkout', [
+                'customer_name' => $customer->name,
+                'customer_email' => $customer->email,
+                'customer_phone' => $customer->phone,
+                'fulfillment_type' => 'delivery',
+                'payment_method' => 'cash_on_delivery',
+                'delivery_address' => '12 Test Street, Quezon City',
+                'scheduled_date' => $date['value'],
+                'scheduled_time' => $date['slots'][0],
+                'terms' => '1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        Http::assertNothingSent();
+
+        $order = Order::query()->where('customer_email', $customer->email)->latest('id')->firstOrFail();
+        $payment = $order->payment;
+
+        $this->assertSame('cash_on_delivery', $order->payment_method);
+        $this->assertSame(OrderStatus::PendingConfirmation, $order->status);
+        $this->assertSame(PaymentStatus::Unpaid, $order->payment_status);
+        $this->assertSame('manual', $payment->provider);
+        $this->assertSame('cash_on_delivery', $payment->payment_method);
+        $this->assertSame(PaymentStatus::Unpaid, $payment->status);
+
+        $this->actingAs($owner)
+            ->patch('/dashboard/orders/'.$order->id.'/status', ['status' => OrderStatus::Confirmed->value])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+        $this->patch('/dashboard/orders/'.$order->id.'/status', ['status' => OrderStatus::Preparing->value])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+        $this->patch('/dashboard/orders/'.$order->id.'/status', ['status' => OrderStatus::OutForDelivery->value])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->post('/dashboard/orders/'.$order->id.'/cash-payment')
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(PaymentStatus::Paid, $payment->fresh()->status);
+        $this->assertSame(PaymentStatus::Paid, $order->fresh()->payment_status);
+        $this->assertDatabaseHas('payment_transactions', [
+            'payment_id' => $payment->id,
+            'provider' => 'manual',
+            'type' => 'cash_on_delivery_collected',
+            'status' => 'paid',
+        ]);
     }
 
     public function test_paid_order_cannot_be_cancelled_from_the_dashboard(): void

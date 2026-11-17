@@ -45,7 +45,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <p class="font-semibold text-amber-900">This order is awaiting payment.</p>
-                        <p class="mt-1 text-sm text-amber-800">Your bakery will not begin until Xendit verifies the payment.</p>
+                    <p class="mt-1 text-sm text-amber-800">Your bakery will not begin until Xendit verifies the payment.</p>
                     </div>
                     <form method="POST" action="{{ route('payments.resume', ['order' => $order, 'token' => $order->public_token]) }}">
                         @csrf
@@ -143,10 +143,17 @@
                                 <p class="font-semibold">₱{{ number_format((float) $order->payment->amount, 0) }}</p>
                             </div>
                             <div>
+                                <p class="label">Method</p>
+                                <p>{{ $order->payment_method === 'cash_on_delivery' ? 'Cash on delivery' : 'Online payment' }}</p>
+                            </div>
+                            <div>
                                 <p class="label">{{ $order->payment->paid_at ? 'Paid at' : 'Created' }}</p>
                                 <p>{{ ($order->payment->paid_at ?? $order->payment->created_at)?->format('M j, Y g:i A') }}</p>
                             </div>
                         </div>
+                        @if ($order->payment_method === 'cash_on_delivery' && ! $order->isPaid())
+                            <p class="mt-4 rounded-xl bg-parchment/60 px-4 py-3 text-sm leading-6 text-cocoa">Please pay ₱{{ number_format((float) $order->total, 0) }} in cash when your order is delivered.</p>
+                        @endif
                     @else
                         <p class="mt-3 text-sm text-cocoa">No payment record has been created yet.</p>
                     @endif

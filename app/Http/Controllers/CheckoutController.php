@@ -64,6 +64,7 @@ class CheckoutController extends Controller
             'customer_email' => ['required', 'email', 'max:190'],
             'customer_phone' => ['required', 'string', 'max:30'],
             'fulfillment_type' => ['required', 'in:pickup,delivery'],
+            'payment_method' => ['required', 'in:xendit,cash_on_delivery'],
             'delivery_address' => ['nullable', 'required_if:fulfillment_type,delivery', 'string', 'max:500'],
             'scheduled_date' => ['required', 'date_format:Y-m-d'],
             'scheduled_time' => ['required', 'date_format:H:i'],
@@ -72,6 +73,11 @@ class CheckoutController extends Controller
         ]);
 
         $order = $this->checkoutService->placeOrder($request, $data);
+
+        if ($order->payment_method === 'cash_on_delivery') {
+            return redirect()->route('orders.show', ['order' => $order->order_number, 'token' => $order->public_token])
+                ->with('success', 'Your order has been placed. Please pay in cash when it is delivered.');
+        }
 
         if (! $this->gateway->isConfigured()) {
             return redirect()->route('orders.show', ['order' => $order->order_number, 'token' => $order->public_token])

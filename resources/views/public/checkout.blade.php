@@ -4,7 +4,8 @@
 
 @section('content')
     <div class="container-page py-12" x-data="{
-        type: @js($defaultType),
+        type: @js(old('fulfillment_type', $defaultType)),
+        paymentMethod: @js(old('payment_method', 'xendit')),
         dates: @js($datesByType),
         date: '',
         time: '',
@@ -15,7 +16,7 @@
         get slots() { const entry = this.dateOptions.find((item) => item.value === this.date); return entry ? entry.slots : [] },
         get delivery() { return this.type !== 'delivery' ? 0 : (this.freeThreshold > 0 && this.subtotal >= this.freeThreshold ? 0 : this.deliveryFee) },
         get total() { return this.subtotal + this.delivery },
-        changeType() { this.date = ''; this.time = '' }
+        changeType() { this.date = ''; this.time = ''; if (this.type !== 'delivery') this.paymentMethod = 'xendit' }
     }">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -28,7 +29,7 @@
         @if (! $xenditConfigured)
             <div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <p class="font-semibold">Online payment is not configured on this installation.</p>
-                <p class="mt-1">You can still place the order. It will be saved as awaiting payment, and the bakery will not begin until payment is verified.</p>
+                <p class="mt-1">Choose cash on delivery for a delivery order, or place an online-payment order that will await payment confirmation.</p>
             </div>
         @endif
 
@@ -136,6 +137,35 @@
                         <textarea name="notes" id="notes" rows="3" maxlength="1000" class="input" placeholder="Allergies, gate codes, or a note about the occasion.">{{ old('notes') }}</textarea>
                     </div>
                 </section>
+
+                <section class="card p-6">
+                    <div class="flex items-center justify-between gap-4">
+                        <h2 class="font-display text-2xl font-semibold">Payment method</h2>
+                        <span class="badge bg-parchment text-cocoa ring-ink/10">Step 4</span>
+                    </div>
+
+                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                        <label class="cursor-pointer rounded-2xl border border-ink/12 bg-white p-4 transition has-[:checked]:border-rose has-[:checked]:bg-blush/30">
+                            <span class="flex items-start gap-3">
+                                <input type="radio" name="payment_method" value="xendit" x-model="paymentMethod" required class="mt-1 border-ink/20 text-rose focus:ring-rose">
+                                <span>
+                                    <span class="block font-semibold">Online payment</span>
+                                    <span class="mt-1 block text-xs leading-5 text-cocoa">Pay securely online through Xendit.</span>
+                                </span>
+                            </span>
+                        </label>
+
+                        <label x-show="type === 'delivery'" class="cursor-pointer rounded-2xl border border-ink/12 bg-white p-4 transition has-[:checked]:border-rose has-[:checked]:bg-blush/30">
+                            <span class="flex items-start gap-3">
+                                <input type="radio" name="payment_method" value="cash_on_delivery" x-model="paymentMethod" class="mt-1 border-ink/20 text-rose focus:ring-rose">
+                                <span>
+                                    <span class="block font-semibold">Cash on delivery</span>
+                                    <span class="mt-1 block text-xs leading-5 text-cocoa">Pay the bakery in cash when your order arrives.</span>
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+                </section>
             </div>
 
             <aside>
@@ -183,9 +213,11 @@
                         </label>
 
                         <button type="submit" class="mt-5 btn-primary w-full" :disabled="!date || !time">
-                            {{ $xenditConfigured ? 'Continue to secure payment' : 'Place order' }}
+                            <span x-show="paymentMethod !== 'cash_on_delivery'">{{ $xenditConfigured ? 'Continue to secure payment' : 'Place order' }}</span>
+                            <span x-show="paymentMethod === 'cash_on_delivery'">Place order</span>
                         </button>
-                        <p class="mt-3 text-center text-xs text-cocoa">Payments are verified by Xendit before the bakery begins.</p>
+                        <p x-show="paymentMethod === 'xendit'" class="mt-3 text-center text-xs text-cocoa">Online payments are verified by Xendit before the bakery begins.</p>
+                        <p x-show="paymentMethod === 'cash_on_delivery'" class="mt-3 text-center text-xs text-cocoa">Have the total ready to pay in cash when your order is delivered.</p>
                     </div>
                 </div>
             </aside>

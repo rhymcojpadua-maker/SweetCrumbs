@@ -97,6 +97,7 @@ Route::middleware(['auth', 'account.active', 'role:shop_owner'])->group(function
         Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [ShopOrderController::class, 'show'])->name('orders.show');
         Route::patch('/orders/{order}/status', [ShopOrderController::class, 'updateStatus'])->name('orders.status');
+        Route::post('/orders/{order}/cash-payment', [ShopOrderController::class, 'markCashReceived'])->name('orders.cash-payment');
 
         Route::resource('products', ShopProductController::class)->except('show');
         Route::delete('/products/{product}/images/{image}', [ShopProductController::class, 'destroyImage'])->name('products.images.destroy');
